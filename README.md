@@ -57,7 +57,7 @@ Configuration variables:
 
 - **username** (*Required*): E-mail address used on the eSolar Portal.
 - **password** (*Required*): Password used on the eSolar Portal, we advice you to save it in your secret.yaml.
-- **resources** (*Required*): This section tells the component which values to display, you can leave out the elecprod values if your don't generate power and the elecusage*pulse types if you use the P1 connection.
+- **resources** (*Required*): This section tells the component which values to display.
 
 ## Screenshot
 
