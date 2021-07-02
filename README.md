@@ -61,8 +61,8 @@ Configuration variables:
 
 ## Screenshot
 
-![alt text](https://github.com/djansen1987/saj_esolar/blob/master/screenshots/Home-Assistant-Sensors-SAJ-eSolar.png?raw=true "All Sensors") -->
-![alt text](https://github.com/djansen1987/saj_esolar/blob/master/screenshots/Home-Assistant-History-SAJ-eSolar.png "History Graph") -->
+![alt text](https://github.com/djansen1987/SAJeSolar/blob/main/screenshots/Home-Assistant-Sensors-SAJ-eSolar.png?raw=true "All Sensors") -->
+![alt text](https://github.com/djansen1987/SAJeSolar/blob/main/screenshots/Home-Assistant-History-SAJ-eSolar.png?raw=true "History Graph") -->
 
 ## Debugging
 
@@ -76,5 +76,5 @@ logger:
 ```
 
 ## Donation
-![alt text](https://github.com/djansen1987/saj_esolar/blob/master/screenshots/Paypal-Donate-QR-code.png?raw=true "Donate") -->
+![alt text](https://github.com/djansen1987/SAJeSolar/blob/main/screenshots/Paypal-Donate-QR-code.png?raw=true "Donate") -->
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/djansen1987)
