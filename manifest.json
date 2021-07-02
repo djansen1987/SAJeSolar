@@ -1,0 +1,8 @@
+{
+  "domain": "saj_esolar",
+  "name": "SAJ eSolar",
+  "version": "0.1.0",
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": ["@djansen1987"]
+}
