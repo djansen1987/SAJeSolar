@@ -8,12 +8,12 @@ The component is build with 1 device to test with used in the Netherlands
 
 ## Installation
 
-### HACS - Recommended
+<!-- ### HACS - Recommended
 - Have [HACS](https://hacs.xyz) installed, this will allow you to easily manage and track updates.
 - Search for 'SAJ eSolar'.
 - Click Install below the found integration.
 - Configure using the configuration instructions below.
-- Restart Home-Assistant.
+- Restart Home-Assistant. -->
 
 ### Manual
 - Copy directory `custom_components/saj_esolar` to your `<config dir>/custom_components` directory.
@@ -27,30 +27,30 @@ To use this component in your installation, add the following to your `configura
 # Example configuration.yaml entry
 
 sensor:
-    - platform: saj_esolar
-        username: aa@bb.cc
-        password: abcd1234
-        resources:
-            - nowPower
-            - runningState
-            - todayElectricity
-            - monthElectricity
-            - yearElectricity
-            - totalElectricity
-            - todayGridIncome
-            - income
-            - lastUploadTime
-            - totalPlantTreeNum
-            - totalReduceCo2
-            - todayAlarmNum
-            - userType
-            - type
-            - status
-            - plantuid
-            - currency
-            - address
-            - isOnline
-            - peakPower
+  - platform: saj_esolar
+    username: aa@bb.cc
+    password: abcd1234
+    resources:
+      - nowPower
+      - runningState
+      - todayElectricity
+      - monthElectricity
+      - yearElectricity
+      - totalElectricity
+      - todayGridIncome
+      - income
+      - lastUploadTime
+      - totalPlantTreeNum
+      - totalReduceCo2
+      - todayAlarmNum
+      - userType
+      - type
+      - status
+      - plantuid
+      - currency
+      - address
+      - isOnline
+      - peakPower
 ```
 
 Configuration variables:
