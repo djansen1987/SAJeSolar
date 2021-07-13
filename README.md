@@ -3,7 +3,7 @@
 ## SAJ eSolar Sensor Component
 This is a Custom Component for Home-Assistant (https://home-assistant.io) reads and displays sensor values from the SAJ eSolar private API.
 
-NOTE: This component is build opon an none public api and can change/break at any time.
+NOTE: This component is build opon an none private API and can change/break at any time.
 The component is build with 1 device to test with used in the Netherlands
 
 ## Installation
