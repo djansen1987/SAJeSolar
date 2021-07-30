@@ -113,11 +113,11 @@ Optional sensors when using an Saj Sec Module:
 
 Configuration variables:
 
-- **username** (*Required*): E-mail address used on the eSolar Portal.
-- **password** (*Required*): Password used on the eSolar Portal, we advice you to save it in your secret.yaml.
-- **resources** (*Required*): This section tells the component which values to display.
-- **sensors** (*Optional*): saj_sec # Optional wil only work with SAJ Sec Module
-- **device_id**:** (*Optional*): M123456789234567 # Optional wil only work with SAJ Sec Module
+- **username**   (*Required*): E-mail address used on the eSolar Portal.
+- **password**   (*Required*): Password used on the eSolar Portal, we advice you to save it in your secret.yaml.
+- **resources**  (*Required*): This section tells the component which values to display.
+- **sensors**    (*Optional*): saj_sec # Optional wil only work with SAJ Sec Module
+- **device_id**: (*Optional*): M123456789234567 # Optional wil only work with SAJ Sec Module
 
 ## Screenshot
 
