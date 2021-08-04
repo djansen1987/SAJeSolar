@@ -8,6 +8,8 @@ sensor:
     - platform: saj_esolar
         username: aa@bb.cc
         password: abcd1234
+        sensors: saj_sec # Optional wil only work with SAJ Sec Module
+        device_id: M123456789123456 # Optional wil only work with SAJ Sec Module
         resources:
             - nowPower
             - runningState
@@ -29,7 +31,9 @@ sensor:
             - address
             - isOnline
             - peakPower
+            #
             # Optional wil only work with SAJ Sec Module:
+
             - totalSellEnergy
             - monthSellEnergy
             - displayfw
@@ -85,7 +89,7 @@ currentdate = datetime.date.today().strftime('%Y-%m-%d')
 BASE_URL = 'https://fop.saj-electric.com/saj/login'
 _LOGGER = logging.getLogger(__name__)
 
-MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=60)
+MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=300)
 
 SENSOR_PREFIX = 'esolar '
 SENSOR_TYPES = {
@@ -183,7 +187,9 @@ class SAJeSolarMeterData(object):
 
         try:
             with async_timeout.timeout(15):
-                
+
+                today = datetime.date.today()
+                clientDate = today.strftime('%Y-%m-%d')
                 # Login to eSolar API
                 url = 'https://fop.saj-electric.com/saj/login'
                 payload = {
@@ -217,6 +223,13 @@ class SAJeSolarMeterData(object):
                 }
                 response = await self._session.post(url, headers=headers, data=payload)
                 
+                _LOGGER.debug(response.json())
+                _LOGGER.debug(response.text())
+
+                if response.status != 200:
+                    _LOGGER.error(f"{response.url} returned {response.status}")
+                    return
+
                 # Get API Plant info from Esolar Portal
                 url2 = 'https://fop.saj-electric.com/saj/monitor/site/getUserPlantList'
                 headers2 = {
@@ -235,7 +248,16 @@ class SAJeSolarMeterData(object):
                     'Referer': 'https://fop.saj-electric.com/saj/monitor/site/list',
                     'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
                 }
-                response2 = await self._session.post(url2, headers=headers2)
+
+                payload2= "pageNo=&pageSize=&orderByIndex=&officeId=&clientDate={}&runningState=&selectInputType=1&plantName=&deviceSn=&type=&countryCode=&isRename=&isTimeError=&systemPowerLeast=&systemPowerMost=".format(clientDate)
+                response2 = await self._session.post(url2, headers=headers2, data=payload2)
+
+                _LOGGER.debug(response2.json())
+                _LOGGER.debug(response2.text())
+
+                if response2.status != 200:
+                    _LOGGER.error(f"{response2.url} returned {response2.status}")
+                    return
 
                 plantInfo = await response2.json()
                 plantuid = plantInfo['plantList'][0]['plantuid']
@@ -260,14 +282,20 @@ class SAJeSolarMeterData(object):
                     'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
                 }
                 response3 = await self._session.post(url3, headers=headers3, data=payload3)
+                
+                _LOGGER.debug(response3.json())
+                _LOGGER.debug(response3.text())
+
+                if response3.status != 200:
+                    _LOGGER.error(f"{response3.url} returned {response3.status}")
+                    return
 
                 plantDetails = await response3.json()
                 plantDetails.update(plantInfo)
 
-                today = datetime.date.today()
+
 
                 plantuid = plantDetails['plantList'][0]['plantuid']
-                clientDate = today.strftime('%Y-%m-%d')
                 deviceSnArr = plantDetails['plantDetail']['snList'][0]
                 previousChartDay = today - timedelta(days=1)               
                 nextChartDay = today + timedelta(days = 1) 
@@ -281,7 +309,7 @@ class SAJeSolarMeterData(object):
                 epochmilliseconds = round(int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds() * 1000))            
                                 
 
-                url4 = "https://fop.saj-electric.com/saj/monitor/site/getPlantDetailChart2?plantuid={}&chartDateType=1&energyType=0&clientDate={}&deviceSnArr=&chartCountType=2&previousChartDay={}&nextChartDay={}&chartDay={}&previousChartMonth={}&nextChartMonth={}&chartMonth={}&previousChartYear={}&nextChartYear={}&chartYear={}".format(plantuid,clientDate,previousChartDay,nextChartDay,chartDay,previousChartMonth,nextChartMonth,chartMonth,previousChartYear,nextChartYear,chartYear)
+                url4 = "https://fop.saj-electric.com/saj/monitor/site/getPlantDetailChart2?plantuid={}&chartDateType=1&energyType=0&clientDate={}&deviceSnArr={}&chartCountType=2&previousChartDay={}&nextChartDay={}&chartDay={}&previousChartMonth={}&nextChartMonth={}&chartMonth={}&previousChartYear={}&nextChartYear={}&chartYear={}&elecDevicesn=&_={}".format(plantuid,clientDate,deviceSnArr,previousChartDay,nextChartDay,chartDay,previousChartMonth,nextChartMonth,chartMonth,previousChartYear,nextChartYear,chartYear,epochmilliseconds)
                 headers4 = {
                     'Connection': 'keep-alive',
                     'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
@@ -299,7 +327,14 @@ class SAJeSolarMeterData(object):
                 }
 
                 response4 = await self._session.post(url4, headers=headers4)
-                
+
+                _LOGGER.debug(response4.json())
+                _LOGGER.debug(response4.text())
+
+                if response4.status != 200:
+                    _LOGGER.error(f"{response4.url} returned {response4.status}")
+                    return
+
                 plantcharts = await response4.json()
                 plantDetails.update(plantcharts)
 
@@ -328,7 +363,14 @@ class SAJeSolarMeterData(object):
                     }
 
                     response5 = await self._session.post(url5, headers=headers5, data=payload5)
-                    
+                
+                    _LOGGER.debug(response5.json())
+                    _LOGGER.debug(response5.text())
+
+                    if response5.status != 200:
+                        _LOGGER.error(f"{response5.url} returned {response5.status}")
+                        return
+
                     findDevicePageList = await response5.json()
                     plantDetails.update(findDevicePageList)
 
@@ -357,7 +399,14 @@ class SAJeSolarMeterData(object):
                     }
 
                     response6 = await self._session.post(url6, headers=headers6)
-                    
+                
+                    _LOGGER.debug(response6.json())
+                    _LOGGER.debug(response6.text())
+
+                    if response6.status != 200:
+                        _LOGGER.error(f"{response6.url} returned {response6.status}")
+                        return
+
                     getPlantMeterChartData = await response6.json()
                     plantDetails.update(getPlantMeterChartData)
 
@@ -365,7 +414,7 @@ class SAJeSolarMeterData(object):
                     self._data = plantDetails
                     # _LOGGER.warning("saj_sec")
                     # _LOGGER.warning(plantDetails)
-
+                    self._session.close()
                 elif self.sensors == "None":
                     self._data = plantDetails
                     # _LOGGER.warning("None")
