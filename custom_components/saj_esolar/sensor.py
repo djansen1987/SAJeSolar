@@ -64,10 +64,20 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.components.sensor import PLATFORM_SCHEMA
+from homeassistant.components.sensor import PLATFORM_SCHEMA, STATE_CLASS_MEASUREMENT
 from homeassistant.const import (
-    CONF_USERNAME, CONF_PASSWORD, CONF_RESOURCES, CONF_SENSORS, CONF_DEVICE_ID,
+    CONF_USERNAME, 
+    CONF_PASSWORD, 
+    CONF_RESOURCES, 
+    CONF_SENSORS, 
+    CONF_DEVICE_ID,
+    DEVICE_CLASS_ENERGY,
+    DEVICE_CLASS_POWER,
+    ENERGY_WATT_HOUR,
+    PERCENTAGE,
+    POWER_WATT,
     )
+
 from homeassistant.helpers.entity import Entity
 from homeassistant.util import Throttle
 
@@ -93,46 +103,46 @@ MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=300)
 
 SENSOR_PREFIX = 'esolar '
 SENSOR_TYPES = {
-    'nowPower': ['nowPower', 'kwh', 'mdi:solar-power'],
-    'runningState': ['runningState', '', 'mdi:solar-panel'],
-    'todayElectricity': ['todayElectricity', 'kwh', 'mdi:solar-panel'],
-    'monthElectricity': ['monthElectricity', 'kwh', 'mdi:solar-panel-large'],
-    'yearElectricity': ['yearElectricity', 'kwh', 'mdi:solar-panel-large'],
-    'totalElectricity': ['totalElectricity', 'kwh', 'mdi:solar-panel-large'],
-    'todayGridIncome': ['todayGridIncome', 'euro', 'mdi:currency-eur'],
-    'income': ['income', 'euro', 'mdi:currency-eur'],
-    'lastUploadTime': ['lastUploadTime', '', 'mdi:timer-sand'],
-    'totalPlantTreeNum': ['totalPlantTreeNum', '', 'mdi:tree'],
-    'totalReduceCo2': ['totalReduceCo2', '', 'mdi:molecule-co2'],
-    'todayAlarmNum': ['todayAlarmNum', '', 'mdi:alarm'],
-    'userType': ['userType', '', 'mdi:account'],
-    'type': ['type', '', 'mdi:help-rhombus'],
-    'plantuid': ['plantuid', '', 'mdi:api'],
-    'plantname': ['plantname', '', 'mdi:api'],
-    'currency': ['currency', '', 'mdi:solar-panel'],
-    'address': ['address', '', 'mdi:solar-panel'],
-    'isOnline': ['isOnline', '', 'mdi:solar-panel'],
-    'status': ['status', '', 'mdi:solar-panel'],
-    'peakPower': ['peakPower', '', 'mdi:solar-panel'],
+    'nowPower': ['nowPower', 'kWh', 'mdi:solar-power', 'energy', 'measurement'],
+    'runningState': ['runningState', '', 'mdi:solar-panel', '', ''],
+    'todayElectricity': ['todayElectricity', 'kwh', 'mdi:solar-panel', '', ''],
+    'monthElectricity': ['monthElectricity', 'kwh', 'mdi:solar-panel-large', '', ''],
+    'yearElectricity': ['yearElectricity', 'kwh', 'mdi:solar-panel-large', '', ''],
+    'totalElectricity': ['totalElectricity', 'kwh', 'mdi:solar-panel-large', '', ''],
+    'todayGridIncome': ['todayGridIncome', 'euro', 'mdi:currency-eur', '', ''],
+    'income': ['income', 'euro', 'mdi:currency-eur', '', ''],
+    'lastUploadTime': ['lastUploadTime', '', 'mdi:timer-sand', '', ''],
+    'totalPlantTreeNum': ['totalPlantTreeNum', '', 'mdi:tree', '', ''],
+    'totalReduceCo2': ['totalReduceCo2', '', 'mdi:molecule-co2', '', ''],
+    'todayAlarmNum': ['todayAlarmNum', '', 'mdi:alarm', '', ''],
+    'userType': ['userType', '', 'mdi:account', '', ''],
+    'type': ['type', '', 'mdi:help-rhombus', '', ''],
+    'plantuid': ['plantuid', '', 'mdi:api', '', ''],
+    'plantname': ['plantname', '', 'mdi:api', '', ''],
+    'currency': ['currency', '', 'mdi:solar-panel', '', ''],
+    'address': ['address', '', 'mdi:solar-panel', '', ''],
+    'isOnline': ['isOnline', '', 'mdi:solar-panel', '', ''],
+    'status': ['status', '', 'mdi:solar-panel', '', ''],
+    'peakPower': ['peakPower', 'kWh', 'mdi:solar-panel', 'energy', 'measurement'],
 
-    'totalSellEnergy': ['totalSellEnergy', '', 'mdi:solar-panel'],
-    'monthSellEnergy': ['monthSellEnergy', '', 'mdi:solar-panel'],
-    'displayfw': ['displayfw', '', 'mdi:solar-panel'],
-    'mastermcufw': ['mastermcufw', '', 'mdi:solar-panel'],
-    'devicetype': ['devicetype', '', 'mdi:solar-panel'],
-    'kitSn': ['kitSn', '', 'mdi:solar-panel'],
+    'totalSellEnergy': ['totalSellEnergy', '', 'mdi:solar-panel', '', ''],
+    'monthSellEnergy': ['monthSellEnergy', '', 'mdi:solar-panel', '', ''],
+    'displayfw': ['displayfw', '', 'mdi:solar-panel', '', ''],
+    'mastermcufw': ['mastermcufw', '', 'mdi:solar-panel', '', ''],
+    'devicetype': ['devicetype', '', 'mdi:solar-panel', '', ''],
+    'kitSn': ['kitSn', '', 'mdi:solar-panel', '', ''],
 
-    'pvElec': ['pvElec', '', 'mdi:solar-panel'],
-    'useElec': ['useElec', '', 'mdi:solar-panel'],
-    'buyElec': ['buyElec', '', 'mdi:solar-panel'],
-    'sellElec': ['sellElec', '', 'mdi:solar-panel'],
-    'buyRate': ['buyRate', '', 'mdi:solar-panel'],
-    'sellRate': ['sellRate', '', 'mdi:solar-panel'],
-    'selfConsumedRate1': ['selfConsumedRate1', '', 'mdi:solar-panel'],
-    'selfConsumedRate2': ['selfConsumedRate2', '', 'mdi:solar-panel'],
-    'selfConsumedEnergy1': ['selfConsumedEnergy1', '', 'mdi:solar-panel'],
-    'selfConsumedEnergy2': ['selfConsumedEnergy2', '', 'mdi:solar-panel'],
-    'reduceCo2': ['reduceCo2', '', 'mdi:solar-panel']
+    'pvElec': ['pvElec', '', 'mdi:solar-panel', '', ''],
+    'useElec': ['useElec', '', 'mdi:solar-panel', '', ''],
+    'buyElec': ['buyElec', '', 'mdi:solar-panel', '', ''],
+    'sellElec': ['sellElec', '', 'mdi:solar-panel', '', ''],
+    'buyRate': ['buyRate', '', 'mdi:solar-panel', '', ''],
+    'sellRate': ['sellRate', '', 'mdi:solar-panel', '', ''],
+    'selfConsumedRate1': ['selfConsumedRate1', '', 'mdi:solar-panel', '', ''],
+    'selfConsumedRate2': ['selfConsumedRate2', '', 'mdi:solar-panel', '', ''],
+    'selfConsumedEnergy1': ['selfConsumedEnergy1', '', 'mdi:solar-panel', '', ''],
+    'selfConsumedEnergy2': ['selfConsumedEnergy2', '', 'mdi:solar-panel', '', ''],
+    'reduceCo2': ['reduceCo2', '', 'mdi:solar-panel', '', '']
 }
 
 
@@ -161,8 +171,12 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         name = SENSOR_PREFIX + SENSOR_TYPES[resource][0]
         unit = SENSOR_TYPES[resource][1]
         icon = SENSOR_TYPES[resource][2]
+        device_class = SENSOR_TYPES[resource][3]
+        state_class = SENSOR_TYPES[resource][4]
+        last_reset = "1970-01-01T00:00:00+00:00"
 
-        entities.append(SAJeSolarMeterSensor(data, name, sensor_type, unit, icon))
+        # _LOGGER.debug("Adding eSolar sensor: {}, {}, {}, {}, {}, {}, {}".format(name, sensor_type, unit, icon, device_class ,state_class ,last_reset))
+        entities.append(SAJeSolarMeterSensor(data, name, sensor_type, unit, icon, device_class, state_class, last_reset ))
 
     async_add_entities(entities, True)
 
@@ -446,7 +460,8 @@ class SAJeSolarMeterData(object):
 
 class SAJeSolarMeterSensor(Entity):
     """Collecting data and return sensor entity."""
-    def __init__(self, data, name, sensor_type, unit, icon):
+    def __init__(self, data, name, sensor_type, unit, icon, device_class, state_class, last_reset):
+        _LOGGER.debug("Adding eSolar sensor: {}, {}, {}, {}, {}, {}, {}".format(name, sensor_type, unit, icon, device_class, state_class, last_reset))
 
         """Initialize the sensor."""
         self._data = data
@@ -454,6 +469,9 @@ class SAJeSolarMeterSensor(Entity):
         self._type = sensor_type
         self._unit = unit
         self._icon = icon
+        self._device_class = device_class
+        self._state_class = state_class
+        self._last_reset = last_reset
 
         self._state = None
         self._discovery = False
@@ -478,7 +496,22 @@ class SAJeSolarMeterSensor(Entity):
     def unit_of_measurement(self):
         """Return the unit of measurement of this entity, if any."""
         return self._unit
+    
+    @property
+    def device_class(self):
+        """Return the device class of measurement of this entity, if any."""
+        return self._device_class
+    
+    @property
+    def state_class(self):
+        """Return the state class of measurement of this entity, if any."""
+        return self._state_class
 
+    @property
+    def last_reset(self):
+        """Return the last reset of measurement of this entity, if any."""
+        return self._last_reset
+                
     async def async_update(self):
         """Get the latest data and use it to update our sensor state."""
 
