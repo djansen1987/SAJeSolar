@@ -134,6 +134,10 @@ logger:
   logs:
     custom_components.saj_esolar: debug
 ```
+## Credits
+
+Credits to @cyberjunky. I got inspired by his source code which helped me a lot to create my first Custom Component.
+https://github.com/cyberjunky/home-assistant-toon_smartmeter/
 
 ## Donation
 
