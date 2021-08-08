@@ -4,5 +4,6 @@
   "version": "0.1.7",
   "requirements": [],
   "dependencies": [],
+  "issue_tracker": "https://github.com/djansen1987/SAJeSolar/issues",
   "codeowners": ["@djansen1987"]
 }
