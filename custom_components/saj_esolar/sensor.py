@@ -1,85 +1,49 @@
 """
-Alternative for the SAJ local API sensor. Unfortunally there is no public api.
+Alternative for the SAJ local API sensor. Unfortunally there is no public api. 
 This Sensor will read the private api of the eSolar portal at https://fop.saj-electric.com/
-
-configuration.yaml
-
-sensor:
-    - platform: saj_esolar
-        username: aa@bb.cc
-        password: abcd1234
-        sensors: saj_sec # Optional wil only work with SAJ Sec Module
-        device_id: M123456789123456 # Optional wil only work with SAJ Sec Module
-        resources:
-            - nowPower
-            - runningState
-            - todayElectricity
-            - monthElectricity
-            - yearElectricity
-            - totalElectricity
-            - todayGridIncome
-            - income
-            - lastUploadTime
-            - totalPlantTreeNum
-            - totalReduceCo2
-            - todayAlarmNum
-            - userType
-            - type
-            - status
-            - plantuid
-            - currency
-            - address
-            - isOnline
-            - peakPower
-            #
-            # Optional wil only work with SAJ Sec Module:
-
-            - totalSellEnergy
-            - monthSellEnergy
-            - displayfw
-            - mastermcufw
-            - devicetype
-            - kitSn
-            - pvElec
-            - useElec
-            - buyElec
-            - sellElec
-            - buyRate
-            - sellRate
-            - selfConsumedRate1
-            - selfConsumedRate2
-            - selfConsumedEnergy1
-            - selfConsumedEnergy2
-            - reduceCo2
 """
-import logging
+
+import asyncio
 from datetime import timedelta
 import datetime
 import calendar
+from functools import reduce
+import logging
+from typing import Final
 
-import aiohttp 
-import asyncio
+import aiohttp
 import async_timeout
 import voluptuous as vol
 
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.components.sensor import PLATFORM_SCHEMA, STATE_CLASS_MEASUREMENT
+from homeassistant.components.sensor import (
+    ATTR_LAST_RESET,
+    ATTR_STATE_CLASS,
+    PLATFORM_SCHEMA,
+    STATE_CLASS_MEASUREMENT,
+    SensorEntity,
+    SensorEntityDescription,
+)
 from homeassistant.const import (
+    ATTR_DEVICE_CLASS,
+    ATTR_ICON,
+    ATTR_NAME,
+    ATTR_UNIT_OF_MEASUREMENT,
+    CONF_HOST,
+    CONF_PORT,
+    CONF_RESOURCES,
     CONF_USERNAME, 
     CONF_PASSWORD, 
-    CONF_RESOURCES, 
-    CONF_SENSORS, 
+    CONF_SENSORS,
     CONF_DEVICE_ID,
+    CONF_SCAN_INTERVAL,
     DEVICE_CLASS_ENERGY,
-    DEVICE_CLASS_POWER,
-    ENERGY_WATT_HOUR,
-    PERCENTAGE,
+    ENERGY_KILO_WATT_HOUR,
     POWER_WATT,
-    )
-
+)
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
-from homeassistant.util import Throttle
+from homeassistant.util import Throttle, dt
 
 def add_months(sourcedate, months):
     month = sourcedate.month - 1 + months
@@ -102,58 +66,273 @@ _LOGGER = logging.getLogger(__name__)
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=300)
 
 SENSOR_PREFIX = 'esolar '
-SENSOR_TYPES = {
-    'nowPower': ['nowPower', 'kWh', 'mdi:solar-power', 'energy', 'measurement'],
-    'runningState': ['runningState', '', 'mdi:solar-panel', '', ''],
-    'todayElectricity': ['todayElectricity', 'kwh', 'mdi:solar-panel', '', ''],
-    'monthElectricity': ['monthElectricity', 'kwh', 'mdi:solar-panel-large', '', ''],
-    'yearElectricity': ['yearElectricity', 'kwh', 'mdi:solar-panel-large', '', ''],
-    'totalElectricity': ['totalElectricity', 'kwh', 'mdi:solar-panel-large', '', ''],
-    'todayGridIncome': ['todayGridIncome', 'euro', 'mdi:currency-eur', '', ''],
-    'income': ['income', 'euro', 'mdi:currency-eur', '', ''],
-    'lastUploadTime': ['lastUploadTime', '', 'mdi:timer-sand', '', ''],
-    'totalPlantTreeNum': ['totalPlantTreeNum', '', 'mdi:tree', '', ''],
-    'totalReduceCo2': ['totalReduceCo2', '', 'mdi:molecule-co2', '', ''],
-    'todayAlarmNum': ['todayAlarmNum', '', 'mdi:alarm', '', ''],
-    'userType': ['userType', '', 'mdi:account', '', ''],
-    'type': ['type', '', 'mdi:help-rhombus', '', ''],
-    'plantuid': ['plantuid', '', 'mdi:api', '', ''],
-    'plantname': ['plantname', '', 'mdi:api', '', ''],
-    'currency': ['currency', '', 'mdi:solar-panel', '', ''],
-    'address': ['address', '', 'mdi:solar-panel', '', ''],
-    'isOnline': ['isOnline', '', 'mdi:solar-panel', '', ''],
-    'status': ['status', '', 'mdi:solar-panel', '', ''],
-    'peakPower': ['peakPower', 'kWh', 'mdi:solar-panel', 'energy', 'measurement'],
+ATTR_MEASUREMENT = "measurement"
+ATTR_SECTION = "section"
 
-    'totalSellEnergy': ['totalSellEnergy', '', 'mdi:solar-panel', '', ''],
-    'monthSellEnergy': ['monthSellEnergy', '', 'mdi:solar-panel', '', ''],
-    'displayfw': ['displayfw', '', 'mdi:solar-panel', '', ''],
-    'mastermcufw': ['mastermcufw', '', 'mdi:solar-panel', '', ''],
-    'devicetype': ['devicetype', '', 'mdi:solar-panel', '', ''],
-    'kitSn': ['kitSn', '', 'mdi:solar-panel', '', ''],
-
-    'pvElec': ['pvElec', '', 'mdi:solar-panel', '', ''],
-    'useElec': ['useElec', '', 'mdi:solar-panel', '', ''],
-    'buyElec': ['buyElec', '', 'mdi:solar-panel', '', ''],
-    'sellElec': ['sellElec', '', 'mdi:solar-panel', '', ''],
-    'buyRate': ['buyRate', '', 'mdi:solar-panel', '', ''],
-    'sellRate': ['sellRate', '', 'mdi:solar-panel', '', ''],
-    'selfConsumedRate1': ['selfConsumedRate1', '', 'mdi:solar-panel', '', ''],
-    'selfConsumedRate2': ['selfConsumedRate2', '', 'mdi:solar-panel', '', ''],
-    'selfConsumedEnergy1': ['selfConsumedEnergy1', '', 'mdi:solar-panel', '', ''],
-    'selfConsumedEnergy2': ['selfConsumedEnergy2', '', 'mdi:solar-panel', '', ''],
-    'reduceCo2': ['reduceCo2', '', 'mdi:solar-panel', '', '']
+SENSOR_LIST = {
+    "nowPower",
+    "runningState",
+    "todayElectricity",
+    "monthElectricity",
+    "yearElectricity",
+    "totalElectricity",
+    "todayGridIncome",
+    "income",
+    "lastUploadTime",
+    "totalPlantTreeNum",
+    "totalReduceCo2",
+    "todayAlarmNum",
+    "plantuid",
+    "plantname",
+    "currency",
+    "address",
+    "isOnline",
+    "status",
+    "peakPower",
+    "totalSellEnergy",
+    "monthSellEnergy",
+    "displayfw",
+    "mastermcufw",
+    "devicetype",
+    "kitSn",
+    "pvElec",
+    "useElec",
+    "buyElec",
+    "sellElec",
+    "buyRate",
+    "sellRate",
+    "selfConsumedRate1",
+    "selfConsumedRate2",
+    "selfConsumedEnergy1",
+    "selfConsumedEnergy2",
+    "reduceCo2",
 }
 
+SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
+    SensorEntityDescription(
+        key="nowPower",
+        name="nowPower",
+        icon="mdi:solar-power",
+        unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_ENERGY,
+    ),
+    SensorEntityDescription(
+        key="runningState",
+        name="runningState",
+        icon="mdi:solar-panel",
+    ),
+    SensorEntityDescription(
+        key="todayElectricity",
+        name="todayElectricity",
+        icon="mdi:solar-panel",
+        unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="monthElectricity",
+        name="monthElectricity",
+        icon="mdi:solar-panel-large",
+        unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="yearElectricity",
+        name="yearElectricity",
+        icon="mdi:solar-panel-large",
+        unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="totalElectricity",
+        name="totalElectricity",
+        icon="mdi:solar-panel-large",
+        unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="todayGridIncome",
+        name="todayGridIncome",
+        icon="mdi:currency-eur",
+    ),
+    SensorEntityDescription(
+        key="income",
+        name="income",
+        icon="mdi:currency-eur",
+    ),
+    SensorEntityDescription(
+        key="lastUploadTime",
+        name="lastUploadTime",
+        icon="mdi:timer-sand",
+    ),
+    SensorEntityDescription(
+        key="totalPlantTreeNum",
+        name="totalPlantTreeNum",
+        icon="mdi:tree",
+    ),
+    SensorEntityDescription(
+        key="totalReduceCo2",
+        name="totalReduceCo2",
+        icon="mdi:molecule-co2",
+    ),
+    SensorEntityDescription(
+        key="todayAlarmNum",
+        name="todayAlarmNum",
+        icon="mdi:alarm",
+    ),
+    SensorEntityDescription(
+        key="plantuid",
+        name="plantuid",
+        icon="mdi:api",
+    ),
+    SensorEntityDescription(
+        key="plantname",
+        name="plantname",
+        icon="mdi:api",
+    ),
+    SensorEntityDescription(
+        key="currency",
+        name="currency",
+        icon="mdi:solar-panel",
+    ),
+    SensorEntityDescription(
+        key="address",
+        name="address",
+        icon="mdi:solar-panel",
+    ),
+        SensorEntityDescription(
+        key="isOnline",
+        name="isOnline",
+        icon="mdi:api",
+    ),
+        SensorEntityDescription(
+        key="status",
+        name="status",
+        icon="mdi:api",
+    ),
+        SensorEntityDescription(
+        key="peakPower",
+        name="peakPower",
+        icon="mdi:solar-panel",
+        unit_of_measurement=POWER_WATT,
+    ),
+        SensorEntityDescription(
+        key="totalSellEnergy",
+        name="totalSellEnergy",
+        icon="mdi:solar-panel",
+        unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+    ),
+        SensorEntityDescription(
+        key="monthSellEnergy",
+        name="monthSellEnergy",
+        icon="mdi:solar-panel",
+        unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+    ),
+        SensorEntityDescription(
+        key="displayfw",
+        name="displayfw",
+        icon="mdi:solar-panel",
+    ),
+        SensorEntityDescription(
+        key="mastermcufw",
+        name="mastermcufw",
+        icon="mdi:solar-panel",
+    ),
+        SensorEntityDescription(
+        key="devicetype",
+        name="devicetype",
+        icon="mdi:solar-panel",
+    ),
+        SensorEntityDescription(
+        key="kitSn",
+        name="kitSn",
+        icon="mdi:solar-panel",
+    ),
+        SensorEntityDescription(
+        key="pvElec",
+        name="pvElec",
+        icon="mdi:solar-panel",
+        unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+    ),
+        SensorEntityDescription(
+        key="useElec",
+        name="useElec",
+        icon="mdi:solar-panel",
+        unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+    ),
+        SensorEntityDescription(
+        key="buyElec",
+        name="buyElec",
+        icon="mdi:solar-panel",
+        unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+    ),
+        SensorEntityDescription(
+        key="sellElec",
+        name="sellElec",
+        icon="mdi:solar-panel",
+        unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+    ),
+        SensorEntityDescription(
+        key="buyRate",
+        name="buyRate",
+        icon="mdi:solar-panel",
+    ),
+        SensorEntityDescription(
+        key="sellRate",
+        name="sellRate",
+        icon="mdi:solar-panel",
+    ),
+        SensorEntityDescription(
+        key="selfConsumedRate1",
+        name="selfConsumedRate1",
+        icon="mdi:solar-panel",
+    ),
+        SensorEntityDescription(
+        key="selfConsumedRate2",
+        name="selfConsumedRate2",
+        icon="mdi:solar-panel",
+    ),
+        SensorEntityDescription(
+        key="selfConsumedEnergy1",
+        name="selfConsumedEnergy1",
+        icon="mdi:solar-panel",
+        unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+    ),
+        SensorEntityDescription(
+        key="selfConsumedEnergy2",
+        name="selfConsumedEnergy2",
+        icon="mdi:solar-panel",
+        unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+    ),
+        SensorEntityDescription(
+        key="reduceCo2",
+        name="reduceCo2",
+        icon="mdi:solar-panel",
+    ),
+)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_USERNAME): cv.string,
-    vol.Required(CONF_PASSWORD): cv.string,
-    vol.Optional(CONF_SENSORS, default="None"): cv.string,
-    vol.Optional(CONF_DEVICE_ID, default="None"): cv.string,
-    vol.Required(CONF_RESOURCES, default=list(SENSOR_TYPES)):
-        vol.All(cv.ensure_list, [vol.In(SENSOR_TYPES)]),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_USERNAME): cv.string,
+        vol.Required(CONF_PASSWORD): cv.string,
+        vol.Optional(CONF_SENSORS, default="None"): cv.string,
+        vol.Optional(CONF_DEVICE_ID, default="None"): cv.string,
+        vol.Required(CONF_RESOURCES, default=list(SENSOR_LIST)): vol.All(
+            cv.ensure_list, [vol.In(SENSOR_LIST)]
+        ),
+    }
+)
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
 
@@ -161,24 +340,15 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     session = async_get_clientsession(hass)
     data = SAJeSolarMeterData(session, config.get(CONF_USERNAME), config.get(CONF_PASSWORD), config.get(CONF_SENSORS), config.get(CONF_DEVICE_ID))
-
     await data.async_update()
 
-
     entities = []
-    for resource in config[CONF_RESOURCES]:
-        sensor_type = resource.lower()
-        name = SENSOR_PREFIX + SENSOR_TYPES[resource][0]
-        unit = SENSOR_TYPES[resource][1]
-        icon = SENSOR_TYPES[resource][2]
-        device_class = SENSOR_TYPES[resource][3]
-        state_class = SENSOR_TYPES[resource][4]
-        last_reset = "1970-01-01T00:00:00+00:00"
-
-        # _LOGGER.debug("Adding eSolar sensor: {}, {}, {}, {}, {}, {}, {}".format(name, sensor_type, unit, icon, device_class ,state_class ,last_reset))
-        entities.append(SAJeSolarMeterSensor(data, name, sensor_type, unit, icon, device_class, state_class, last_reset ))
-
+    for description in SENSOR_TYPES:
+        if description.key in config[CONF_RESOURCES]:
+            sensor = SAJeSolarMeterSensor(description, data)
+            entities.append(sensor)
     async_add_entities(entities, True)
+    return True
 
 # pylint: disable=abstract-method
 class SAJeSolarMeterData(object):
@@ -458,24 +628,31 @@ class SAJeSolarMeterData(object):
         _LOGGER.error("return data NONE")
         return None
 
-class SAJeSolarMeterSensor(Entity):
+class SAJeSolarMeterSensor(SensorEntity):
     """Collecting data and return sensor entity."""
-    def __init__(self, data, name, sensor_type, unit, icon, device_class, state_class, last_reset):
-        _LOGGER.debug("Adding eSolar sensor: {}, {}, {}, {}, {}, {}, {}".format(name, sensor_type, unit, icon, device_class, state_class, last_reset))
 
+    def __init__(self, description: SensorEntityDescription, data):
         """Initialize the sensor."""
+        self.entity_description = description
         self._data = data
-        self._name = name
-        self._type = sensor_type
-        self._unit = unit
-        self._icon = icon
-        self._device_class = device_class
-        self._state_class = state_class
-        self._last_reset = last_reset
 
         self._state = None
+
+        self._type = self.entity_description.key
+        self._name = SENSOR_PREFIX + self.entity_description.name
+        self._icon = self.entity_description.icon
+        self._unit_of_measurement = self.entity_description.unit_of_measurement
+        self._state_class = self.entity_description.state_class
+        self._device_class = self.entity_description.device_class
+        self._last_reset = dt.utc_from_timestamp(0)
+
         self._discovery = False
         self._dev_id = {}
+
+    @property
+    def unique_id(self):
+        """Return the unique id."""
+        return f"{SENSOR_PREFIX}_{self._type}"
 
     @property
     def name(self):
@@ -489,29 +666,29 @@ class SAJeSolarMeterSensor(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor. """
+        """Return the state of the sensor. (total/current power consumption/production or total gas used)"""
         return self._state
 
     @property
     def unit_of_measurement(self):
-        """Return the unit of measurement of this entity, if any."""
-        return self._unit
-    
+        """Return the unit of measurement of this entity."""
+        return self._unit_of_measurement
+
     @property
     def device_class(self):
-        """Return the device class of measurement of this entity, if any."""
+        """Return the device class of this entity."""
         return self._device_class
-    
+
     @property
     def state_class(self):
-        """Return the state class of measurement of this entity, if any."""
+        """Return the state class of this entity."""
         return self._state_class
 
     @property
     def last_reset(self):
-        """Return the last reset of measurement of this entity, if any."""
+        """Return the last reset of measurement of this entity."""
         return self._last_reset
-                
+
     async def async_update(self):
         """Get the latest data and use it to update our sensor state."""
 
@@ -520,47 +697,41 @@ class SAJeSolarMeterSensor(Entity):
 
         if energy:
             
-            if self._type == 'nowpower':
+            if self._type == 'nowPower':
                 self._state = float(energy['plantDetail']["nowPower"])
 
-            if self._type == 'runningstate':
+            if self._type == 'runningState':
                 self._state = int(energy['plantDetail']["runningState"])
 
-            if self._type == 'todayelectricity':
+            if self._type == 'todayElectricity':
                 self._state = float(energy['plantDetail']["todayElectricity"])
 
-            if self._type == 'monthelectricity':
+            if self._type == 'monthElectricity':
                 self._state = float(energy['plantDetail']["monthElectricity"])
 
-            if self._type == 'yearelectricity':
+            if self._type == 'yearElectricity':
                 self._state = float(energy['plantDetail']["yearElectricity"])
 
-            if self._type == 'totalelectricity':
+            if self._type == 'totalElectricity':
                 self._state = float(energy['plantDetail']["totalElectricity"])
 
-            if self._type == 'todaygridincome':
+            if self._type == 'todayGridIncome':
                 self._state = float(energy['plantDetail']["todayGridIncome"])
 
             if self._type == 'income':
                 self._state = float(energy['plantDetail']["income"])
 
-            if self._type == 'lastuploadtime':
+            if self._type == 'lastUploadTime':
                 self._state = (energy['plantDetail']["lastUploadTime"])
 
-            if self._type == 'totalplanttreenum':
+            if self._type == 'totalPlantTreeNum':
                 self._state = (energy['plantDetail']["totalPlantTreeNum"])
 
-            if self._type == 'totalreduceco2':
+            if self._type == 'totalReduceCo2':
                 self._state = (energy['plantDetail']["totalReduceCo2"])
 
-            if self._type == 'todayalarmnum':
+            if self._type == 'todayAlarmNum':
                 self._state = (energy['plantDetail']["todayAlarmNum"])
-
-            if self._type == 'usertype':
-                self._state = (energy['plantDetail']["userType"])
-
-            if self._type == 'type':
-                self._state = (energy['plantDetail']["type"])
 
             if self._type == 'plantuid':
                 self._state = (energy['plantList'][0]["plantuid"])
@@ -574,10 +745,10 @@ class SAJeSolarMeterSensor(Entity):
             if self._type == 'address':
                 self._state = (energy['plantList'][0]["address"])
 
-            if self._type == 'isonline':
+            if self._type == 'isOnline':
                 self._state = (energy['plantList'][0]["isOnline"])
 
-            if self._type == 'peakpower':
+            if self._type == 'peakPower':
                 if 'peakPower' in energy:
                     if energy['peakPower'] is not None:
                         self._state = float(energy['peakPower'])
@@ -590,10 +761,10 @@ class SAJeSolarMeterSensor(Entity):
             # Sec module Sensors:
 
             # list
-            if self._type == 'monthsellenergy':
+            if self._type == 'monthSellEnergy':
                 self._state = float(energy['list'][0]["monthSellEnergy"])
 
-            if self._type == 'totalsellenergy':
+            if self._type == 'totalSellEnergy':
                 self._state = float(energy['list'][0]["totalSellEnergy"])
 
             if self._type == 'displayfw':
@@ -605,42 +776,42 @@ class SAJeSolarMeterSensor(Entity):
             if self._type == 'devicetype':
                 self._state = (energy['list'][0]["devicetype"])
 
-            if self._type == 'kitsn':
+            if self._type == 'kitSn':
                 self._state = (energy['list'][0]["kitSn"])
 
 
             # viewBeam
-            if self._type == 'pvelec':
+            if self._type == 'pvElec':
                 self._state = float(energy['viewBean']["pvElec"])
                 
-            if self._type == 'useelec':
+            if self._type == 'useElec':
                 self._state = float(energy['viewBean']["useElec"])
 
-            if self._type == 'buyelec':
+            if self._type == 'buyElec':
                 self._state = float(energy['viewBean']["buyElec"])
 
-            if self._type == 'sellelec':
+            if self._type == 'sellElec':
                 self._state = float(energy['viewBean']["sellElec"])
 
-            if self._type == 'buyrate':
+            if self._type == 'buyRate':
                 self._state = (energy['viewBean']["buyRate"])
 
-            if self._type == 'sellrate':
+            if self._type == 'sellRate':
                 self._state = (energy['viewBean']["sellRate"])
 
-            if self._type == 'selfconsumedeate1':
+            if self._type == 'selfConsumedRate1':
                 self._state = (energy['viewBean']["selfConsumedRate1"])
 
-            if self._type == 'selfconsumedeate2':
+            if self._type == 'selfConsumedRate2':
                 self._state = (energy['viewBean']["selfConsumedRate2"])
 
-            if self._type == 'selfconsumedenergy1':
+            if self._type == 'selfConsumedEnergy1':
                 self._state = float(energy['viewBean']["selfConsumedEnergy1"])
 
-            if self._type == 'selfconsumedenergy2':
+            if self._type == 'selfConsumedEnergy2':
                 self._state = float(energy['viewBean']["selfConsumedEnergy2"])
 
-            if self._type == 'reduceco2':
+            if self._type == 'reduceCo2':
                 self._state = float(energy['viewBean']["reduceCo2"])
 
             _LOGGER.debug("Device: {} State: {}".format(self._type, self._state)) #debug

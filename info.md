@@ -48,8 +48,6 @@ sensor:
       - totalPlantTreeNum
       - totalReduceCo2
       - todayAlarmNum
-      - userType
-      - type
       - status
       - plantuid
       - currency
