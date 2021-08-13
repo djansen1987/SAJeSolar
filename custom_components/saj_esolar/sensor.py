@@ -7,6 +7,7 @@ import asyncio
 from datetime import timedelta
 import datetime
 import calendar
+
 from functools import reduce
 import logging
 from typing import Final
@@ -37,6 +38,7 @@ from homeassistant.const import (
     CONF_DEVICE_ID,
     CONF_SCAN_INTERVAL,
     DEVICE_CLASS_ENERGY,
+    DEVICE_CLASS_POWER,
     ENERGY_KILO_WATT_HOUR,
     POWER_WATT,
 )
@@ -89,12 +91,6 @@ SENSOR_LIST = {
     "isOnline",
     "status",
     "peakPower",
-    "totalSellEnergy",
-    "monthSellEnergy",
-    "displayfw",
-    "mastermcufw",
-    "devicetype",
-    "kitSn",
     "pvElec",
     "useElec",
     "buyElec",
@@ -105,7 +101,11 @@ SENSOR_LIST = {
     "selfConsumedRate2",
     "selfConsumedEnergy1",
     "selfConsumedEnergy2",
+    "plantTreeNum",
     "reduceCo2",
+    "totalGridPower",
+    "totalLoadPower",
+    "totalPvgenPower",
 }
 
 SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
@@ -114,7 +114,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         name="nowPower",
         icon="mdi:solar-power",
         unit_of_measurement=POWER_WATT,
-        device_class=DEVICE_CLASS_ENERGY,
+        device_class=DEVICE_CLASS_POWER,
     ),
     SensorEntityDescription(
         key="runningState",
@@ -124,7 +124,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
     SensorEntityDescription(
         key="todayElectricity",
         name="todayElectricity",
-        icon="mdi:solar-panel",
+        icon="mdi:solar-panel-large",
         unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_MEASUREMENT,
@@ -203,122 +203,127 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         name="address",
         icon="mdi:solar-panel",
     ),
-        SensorEntityDescription(
+    SensorEntityDescription(
         key="isOnline",
         name="isOnline",
         icon="mdi:api",
     ),
-        SensorEntityDescription(
+    SensorEntityDescription(
         key="status",
         name="status",
         icon="mdi:api",
     ),
-        SensorEntityDescription(
+    SensorEntityDescription(
         key="peakPower",
         name="peakPower",
         icon="mdi:solar-panel",
         unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
     ),
-        SensorEntityDescription(
-        key="totalSellEnergy",
-        name="totalSellEnergy",
-        icon="mdi:solar-panel",
-        unit_of_measurement=ENERGY_KILO_WATT_HOUR,
-        device_class=DEVICE_CLASS_ENERGY,
-    ),
-        SensorEntityDescription(
-        key="monthSellEnergy",
-        name="monthSellEnergy",
-        icon="mdi:solar-panel",
-        unit_of_measurement=ENERGY_KILO_WATT_HOUR,
-        device_class=DEVICE_CLASS_ENERGY,
-    ),
-        SensorEntityDescription(
-        key="displayfw",
-        name="displayfw",
-        icon="mdi:solar-panel",
-    ),
-        SensorEntityDescription(
-        key="mastermcufw",
-        name="mastermcufw",
-        icon="mdi:solar-panel",
-    ),
-        SensorEntityDescription(
-        key="devicetype",
-        name="devicetype",
-        icon="mdi:solar-panel",
-    ),
-        SensorEntityDescription(
-        key="kitSn",
-        name="kitSn",
-        icon="mdi:solar-panel",
-    ),
-        SensorEntityDescription(
+
+
+
+
+    SensorEntityDescription(
         key="pvElec",
         name="pvElec",
-        icon="mdi:solar-panel",
+        icon="mdi:solar-panel-large",
         unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_MEASUREMENT,
     ),
-        SensorEntityDescription(
+    SensorEntityDescription(
         key="useElec",
         name="useElec",
-        icon="mdi:solar-panel",
+        icon="mdi:solar-panel-large",
         unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_MEASUREMENT,
     ),
-        SensorEntityDescription(
+    SensorEntityDescription(
         key="buyElec",
         name="buyElec",
-        icon="mdi:solar-panel",
+        icon="mdi:solar-panel-large",
         unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_MEASUREMENT,
     ),
-        SensorEntityDescription(
+    SensorEntityDescription(
         key="sellElec",
         name="sellElec",
-        icon="mdi:solar-panel",
+        icon="mdi:solar-panel-large",
         unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_MEASUREMENT,
     ),
-        SensorEntityDescription(
+    SensorEntityDescription(
         key="buyRate",
         name="buyRate",
         icon="mdi:solar-panel",
     ),
-        SensorEntityDescription(
+    SensorEntityDescription(
         key="sellRate",
         name="sellRate",
         icon="mdi:solar-panel",
     ),
-        SensorEntityDescription(
+    SensorEntityDescription(
         key="selfConsumedRate1",
         name="selfConsumedRate1",
         icon="mdi:solar-panel",
     ),
-        SensorEntityDescription(
+    SensorEntityDescription(
         key="selfConsumedRate2",
         name="selfConsumedRate2",
         icon="mdi:solar-panel",
     ),
-        SensorEntityDescription(
+    SensorEntityDescription(
         key="selfConsumedEnergy1",
         name="selfConsumedEnergy1",
-        icon="mdi:solar-panel",
+        icon="mdi:solar-panel-large",
         unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_MEASUREMENT,
     ),
-        SensorEntityDescription(
+    SensorEntityDescription(
         key="selfConsumedEnergy2",
         name="selfConsumedEnergy2",
-        icon="mdi:solar-panel",
+        icon="mdi:solar-panel-large",
         unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_MEASUREMENT,
     ),
-        SensorEntityDescription(
+    SensorEntityDescription(
+        key="plantTreeNum",
+        name="plantTreeNum",
+        icon="mdi:tree",
+    ),
+    SensorEntityDescription(
         key="reduceCo2",
         name="reduceCo2",
+        icon="mdi:molecule-co2",
+    ),
+
+
+    SensorEntityDescription(
+        key="totalGridPower",
+        name="totalGridPower",
         icon="mdi:solar-panel",
+        unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+    ),
+    SensorEntityDescription(
+        key="totalLoadPower",
+        name="totalLoadPower",
+        icon="mdi:solar-panel",
+        unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+    ),
+    SensorEntityDescription(
+        key="totalPvgenPower",
+        name="totalPvgenPower",
+        icon="mdi:solar-panel",
+        unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
     ),
 )
 
@@ -326,11 +331,11 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_USERNAME): cv.string,
         vol.Required(CONF_PASSWORD): cv.string,
-        vol.Optional(CONF_SENSORS, default="None"): cv.string,
-        vol.Optional(CONF_DEVICE_ID, default="None"): cv.string,
         vol.Required(CONF_RESOURCES, default=list(SENSOR_LIST)): vol.All(
             cv.ensure_list, [vol.In(SENSOR_LIST)]
         ),
+        vol.Optional(CONF_SENSORS, default="None"): cv.string,
+        vol.Optional(CONF_DEVICE_ID, default="None"): cv.string,
     }
 )
 
@@ -370,11 +375,13 @@ class SAJeSolarMeterData(object):
         """Download and update data from SAJeSolar."""
 
         try:
-            with async_timeout.timeout(15):
+            with async_timeout.timeout(55):
 
                 today = datetime.date.today()
                 clientDate = today.strftime('%Y-%m-%d')
-                # Login to eSolar API
+
+# Login to eSolar API
+
                 url = 'https://fop.saj-electric.com/saj/login'
                 payload = {
                     'lang': 'en',
@@ -406,7 +413,7 @@ class SAJeSolarMeterData(object):
                     : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36'
                 }
                 response = await self._session.post(url, headers=headers, data=payload)
-                
+
                 _LOGGER.debug(response.json())
                 _LOGGER.debug(response.text())
 
@@ -414,7 +421,8 @@ class SAJeSolarMeterData(object):
                     _LOGGER.error(f"{response.url} returned {response.status}")
                     return
 
-                # Get API Plant info from Esolar Portal
+# Get API Plant info from Esolar Portal
+
                 url2 = 'https://fop.saj-electric.com/saj/monitor/site/getUserPlantList'
                 headers2 = {
                     'Connection': 'keep-alive',
@@ -446,7 +454,8 @@ class SAJeSolarMeterData(object):
                 plantInfo = await response2.json()
                 plantuid = plantInfo['plantList'][0]['plantuid']
 
-                # Get API Plant Solar Details
+# Get API Plant Solar Details
+
                 url3 = "https://fop.saj-electric.com/saj/monitor/site/getPlantDetailInfo"   
                 payload3="plantuid={}&clientDate={}".format(plantuid,currentdate)
                 headers3 = {
@@ -478,6 +487,7 @@ class SAJeSolarMeterData(object):
                 plantDetails.update(plantInfo)
 
 
+# getPlantDetailChart2
 
                 plantuid = plantDetails['plantList'][0]['plantuid']
                 deviceSnArr = plantDetails['plantDetail']['snList'][0]
@@ -492,7 +502,6 @@ class SAJeSolarMeterData(object):
                 chartYear = today.strftime('%Y')
                 epochmilliseconds = round(int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds() * 1000))            
                                 
-
                 url4 = "https://fop.saj-electric.com/saj/monitor/site/getPlantDetailChart2?plantuid={}&chartDateType=1&energyType=0&clientDate={}&deviceSnArr={}&chartCountType=2&previousChartDay={}&nextChartDay={}&chartDay={}&previousChartMonth={}&nextChartMonth={}&chartMonth={}&previousChartYear={}&nextChartYear={}&chartYear={}&elecDevicesn=&_={}".format(plantuid,clientDate,deviceSnArr,previousChartDay,nextChartDay,chartDay,previousChartMonth,nextChartMonth,chartMonth,previousChartYear,nextChartYear,chartYear,epochmilliseconds)
                 headers4 = {
                     'Connection': 'keep-alive',
@@ -523,14 +532,48 @@ class SAJeSolarMeterData(object):
                 plantDetails.update(plantcharts)
 
 
+
+
                 if self.sensors == "saj_sec":
+# getPlantMeterModuleList
+                    url_module = "https://fop.saj-electric.com/saj/cloudmonitor/plantMeterModule/getPlantMeterModuleList"
+
+                    payload_module = "pageNo=&pageSize=&plantUid={}".format(plantuid)
+                    headers_module = {
+                        'Connection': 'keep-alive',
+                        'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
+                        'Accept': 'application/json, text/javascript, */*; q=0.01',
+                        'DNT': '1',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'sec-ch-ua-mobile': '?0',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+                        'Sec-Fetch-Site': 'same-origin',
+                        'Sec-Fetch-Mode': 'cors',
+                        'Sec-Fetch-Dest': 'empty',
+                        'Referer': 'https://fop.saj-electric.com/saj/monitor/home/index',
+                        'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
+                    }                  
                     
-                    # Get Sec Module Serialnumber ## Not working at the moment, workaround via config
+                    response_module = await self._session.post(url_module, headers=headers_module, data=payload_module)
+                
+                    _LOGGER.debug(response_module.json())
+                    _LOGGER.debug(response_module.text())
 
-                    url5 = "https://fop.saj-electric.com/saj/cloudMonitor/device/findDevicePageList"
+                    if response_module.status != 200:
+                        _LOGGER.error(f"{response_module.url} returned {response_module.status}")
+                        return
 
-                    payload5 = "officeId=1&pageNo=&pageSize=&orderName=1&orderType=2&plantuid={}&deviceStatus=&localDate={}&localMonth={}".format(plantuid,chartMonth,chartMonth)
-                    headers5 = {
+                    getPlantMeterModuleList = await response_module.json()
+                    plantDetails.update(getPlantMeterModuleList)
+                    _LOGGER.debug(getPlantMeterModuleList)
+
+# findDevicePageList
+
+                    url_findDevicePageList = "https://fop.saj-electric.com/saj/cloudMonitor/device/findDevicePageList"
+
+                    payload_findDevicePageList = "officeId=1&pageNo=&pageSize=&orderName=1&orderType=2&plantuid={}&deviceStatus=&localDate={}&localMonth={}".format(plantuid,chartMonth,chartMonth)
+                    headers_findDevicePageList = {
                         'Connection': 'keep-alive',
                         'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
                         'Accept': 'application/json, text/javascript, */*; q=0.01',
@@ -546,27 +589,28 @@ class SAJeSolarMeterData(object):
                         'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
                     }
 
-                    response5 = await self._session.post(url5, headers=headers5, data=payload5)
+                    response_findDevicePageList = await self._session.post(url_findDevicePageList, headers=headers_findDevicePageList, data=payload_findDevicePageList)
                 
-                    _LOGGER.debug(response5.json())
-                    _LOGGER.debug(response5.text())
+                    _LOGGER.debug(response_findDevicePageList.json())
+                    _LOGGER.debug(response_findDevicePageList.text())
 
-                    if response5.status != 200:
-                        _LOGGER.error(f"{response5.url} returned {response5.status}")
+                    if response_findDevicePageList.status != 200:
+                        _LOGGER.error(f"{response_findDevicePageList.url} returned {response_findDevicePageList.status}")
                         return
 
-                    findDevicePageList = await response5.json()
+                    findDevicePageList = await response_findDevicePageList.json()
                     plantDetails.update(findDevicePageList)
 
                     
                     # Get Sec Meter details 1/2
-                    moduleSn = self.sec_sn #plantDetails['list'][0]['kitSn']
+                    # moduleSn = self.sec_sn #plantDetails['list'][0]['kitSn']
+                    moduleSn = plantDetails['moduleList'][0]['moduleSn']
                     # _LOGGER.warning(moduleSn)
 
-                    url6 = "https://fop.saj-electric.com/saj/monitor/site/getPlantMeterChartData?plantuid={}&chartDateType=1&energyType=0&clientDate={}&deviceSnArr=&chartCountType=2&previousChartDay={}&nextChartDay={}&chartDay={}&previousChartMonth={}&nextChartMonth={}&chartMonth={}&previousChartYear={}&nextChartYear={}&chartYear={}&moduleSn={}&_={}".format(plantuid,clientDate,previousChartDay,nextChartDay,chartDay,previousChartMonth,nextChartMonth,chartMonth,previousChartYear,nextChartYear,chartYear,moduleSn,epochmilliseconds)
+                    url_getPlantMeterChartData = "https://fop.saj-electric.com/saj/monitor/site/getPlantMeterChartData?plantuid={}&chartDateType=1&energyType=0&clientDate={}&deviceSnArr=&chartCountType=2&previousChartDay={}&nextChartDay={}&chartDay={}&previousChartMonth={}&nextChartMonth={}&chartMonth={}&previousChartYear={}&nextChartYear={}&chartYear={}&moduleSn={}&_={}".format(plantuid,clientDate,previousChartDay,nextChartDay,chartDay,previousChartMonth,nextChartMonth,chartMonth,previousChartYear,nextChartYear,chartYear,moduleSn,epochmilliseconds)
                     # _LOGGER.warning(url6)
 
-                    headers6 = {
+                    headers_getPlantMeterChartData = {
                         'Connection': 'keep-alive',
                         'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
                         'Accept': 'application/json, text/javascript, */*; q=0.01',
@@ -582,32 +626,69 @@ class SAJeSolarMeterData(object):
                         'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
                     }
 
-                    response6 = await self._session.post(url6, headers=headers6)
+                    response_getPlantMeterChartData = await self._session.post(url_getPlantMeterChartData, headers=headers_getPlantMeterChartData)
                 
-                    _LOGGER.debug(response6.json())
-                    _LOGGER.debug(response6.text())
+                    _LOGGER.debug(response_getPlantMeterChartData.json())
+                    _LOGGER.debug(response_getPlantMeterChartData.text())
 
-                    if response6.status != 200:
-                        _LOGGER.error(f"{response6.url} returned {response6.status}")
+                    if response_getPlantMeterChartData.status != 200:
+                        _LOGGER.error(f"{response_getPlantMeterChartData.url} returned {response_getPlantMeterChartData.status}")
                         return
 
-                    getPlantMeterChartData = await response6.json()
+                    getPlantMeterChartData = await response_getPlantMeterChartData.json()
                     plantDetails.update(getPlantMeterChartData)
 
 
+# # # Get Sec Meter details 1/2
+
+#                     url_getMeterModuleHistoryDataList = "https://fop.saj-electric.com/saj/cloudmonitor/plantMeterModule/getMeterModuleHistoryDataList"
+
+#                     payload_getMeterModuleHistoryDataList = "pageNo=1&pageSize=&plantUid={}&moduleSn={}&chartDateType=1&clientDate={}&chartDay={}&chartMonth={}&chartYear={}".format(plantuid,moduleSn,clientDate,chartDay,chartMonth,chartYear)
+#                     headers_getMeterModuleHistoryDataList = {
+#                         'Connection': 'keep-alive',
+#                         'sec-ch-ua': '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
+#                         'Accept': 'application/json, text/javascript, */*; q=0.01',
+#                         'DNT': '1',
+#                         'X-Requested-With': 'XMLHttpRequest',
+#                         'sec-ch-ua-mobile': '?0',
+#                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36',
+#                         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+#                         'Origin': 'https://fop.saj-electric.com',
+#                         'Sec-Fetch-Site': 'same-origin',
+#                         'Sec-Fetch-Mode': 'cors',
+#                         'Sec-Fetch-Dest': 'empty',
+#                         'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
+#                     }
+
+#                     response_getMeterModuleHistoryDataList = await self._session.post(url_getMeterModuleHistoryDataList, headers=headers_getMeterModuleHistoryDataList, data=payload_getMeterModuleHistoryDataList)
+                
+#                     _LOGGER.debug(response_getMeterModuleHistoryDataList.json())
+#                     _LOGGER.debug(response_getMeterModuleHistoryDataList.text())
+
+#                     if response_getMeterModuleHistoryDataList.status != 200:
+#                         _LOGGER.error(f"{response_getMeterModuleHistoryDataList.url} returned {response_getMeterModuleHistoryDataList.status}")
+#                         return
+                    
+
+#                     getMeterModuleHistoryDataList = await response_getMeterModuleHistoryDataList.json()
+#                     plantDetails.update(getMeterModuleHistoryDataList)
+
+
                     self._data = plantDetails
-                    # _LOGGER.warning("saj_sec")
-                    # _LOGGER.warning(plantDetails)
-                    self._session.close()
+                    _LOGGER.debug(self._data) 
+                    # _LOGGER.debug(self._session.cookie_jar.filter_cookies("https://fop.saj-electric.com"))
+                    # self._session.cookie_jar.clear()
                 elif self.sensors == "None":
                     self._data = plantDetails
-                    # _LOGGER.warning("None")
+                    _LOGGER.debug(self._data) 
+                    # _LOGGER.debug(self._session.cookie_jar.filter_cookies("https://fop.saj-electric.com"))
+                    # self._session.cookie_jar.clear()
                 else:
                     self._data = plantDetails
-                    # _LOGGER.warning("else")
+                    _LOGGER.debug(self._data) 
                 
-                self._data = plantDetails
-                _LOGGER.debug(self._data) 
+                _LOGGER.debug(self._session.cookie_jar.filter_cookies("https://fop.saj-electric.com"))
+                self._session.cookie_jar.clear()
 
         except aiohttp.ClientError:
             _LOGGER.error("Cannot poll eSolar using url: %s")
@@ -687,7 +768,9 @@ class SAJeSolarMeterSensor(SensorEntity):
     @property
     def last_reset(self):
         """Return the last reset of measurement of this entity."""
-        return self._last_reset
+        if self._device_class == DEVICE_CLASS_ENERGY:
+            return self._last_reset
+        return None
 
     async def async_update(self):
         """Get the latest data and use it to update our sensor state."""
@@ -760,26 +843,6 @@ class SAJeSolarMeterSensor(SensorEntity):
 
             # Sec module Sensors:
 
-            # list
-            if self._type == 'monthSellEnergy':
-                self._state = float(energy['list'][0]["monthSellEnergy"])
-
-            if self._type == 'totalSellEnergy':
-                self._state = float(energy['list'][0]["totalSellEnergy"])
-
-            if self._type == 'displayfw':
-                self._state = (energy['list'][0]["displayfw"])
-
-            if self._type == 'mastermcufw':
-                self._state = (energy['list'][0]["mastermcufw"])
-
-            if self._type == 'devicetype':
-                self._state = (energy['list'][0]["devicetype"])
-
-            if self._type == 'kitSn':
-                self._state = (energy['list'][0]["kitSn"])
-
-
             # viewBeam
             if self._type == 'pvElec':
                 self._state = float(energy['viewBean']["pvElec"])
@@ -813,5 +876,16 @@ class SAJeSolarMeterSensor(SensorEntity):
 
             if self._type == 'reduceCo2':
                 self._state = float(energy['viewBean']["reduceCo2"])
+
+
+            # dataCountLis
+            if self._type == 'totalGridPower':
+                self._state = float(energy['dataCountList'][4][-1])
+
+            if self._type == 'totalLoadPower':
+                self._state = float(energy['dataCountList'][2][-1])
+
+            if self._type == 'totalPvgenPower':
+                self._state = float(energy['dataCountList'][3][-1])
 
             _LOGGER.debug("Device: {} State: {}".format(self._type, self._state)) #debug
