@@ -1,7 +1,7 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/djansen1987/)
 
 ## SAJ eSolar Sensor Component
-This is a Custom Component for Home-Assistant (https://home-assistant.io) reads and displays sensor values from the SAJ eSolar private API.
+This is a Custom Component for Home-Assistant (https://home-assistant.io) reads and displays sensor values from the SAJ eSolar Portal private API.
 
 NOTE: This component is build opon an none private API and can change/break at any time.
 The component is build with 1 device to test with used in the Netherlands
@@ -34,7 +34,7 @@ sensor:
     username: aa@bb.cc
     password: abcd1234
     # sensors: saj_sec # Optional wil only work with SAJ Sec Module
-    # device_id: M123456789234567 # Optional wil only work with SAJ Sec Module
+
     resources:
       - nowPower
       - runningState
@@ -54,14 +54,7 @@ sensor:
       - address
       - isOnline
       - peakPower
-
       # Optional wil only work with SAJ Sec Module:
-      - totalSellEnergy
-      - monthSellEnergy
-      - displayfw
-      - mastermcufw
-      - devicetype
-      - kitSn
       - pvElec
       - useElec
       - buyElec
@@ -72,6 +65,7 @@ sensor:
       - selfConsumedRate2
       - selfConsumedEnergy1
       - selfConsumedEnergy2
+      - plantTreeNum
       - reduceCo2
 ```
 
@@ -79,22 +73,16 @@ If you have a Saj Sec module add the following config under platform:
 
 ```yaml
     sensors: saj_sec # Optional wil only work with SAJ Sec Module
-    device_id: M123456789234567 # Optional wil only work with SAJ Sec Module
+    # device_id: M123456789234567 # Optional wil only work with SAJ Sec Module
 ```  
 
-The device_id can be found on the SAJ portal under "Load Monitorring" (Currently have not found a api the outputs the serial numbers, there for it need to be added manualy)
-![alt text](https://github.com/djansen1987/SAJeSolar/blob/main/screenshots/SAJ-Portal-Sec-Module-Serial-Number.png?raw=true "Sec Serial Number")
+<!-- The device_id can be found on the SAJ portal under "Load Monitorring" (Currently have not found a api the outputs the serial numbers, there for it need to be added manualy)
+![alt text](https://github.com/djansen1987/SAJeSolar/blob/main/screenshots/SAJ-Portal-Sec-Module-Serial-Number.png?raw=true "Sec Serial Number") -->
 
 
 Optional sensors when using an Saj Sec Module:
 
 ```yaml
-      - totalSellEnergy
-      - monthSellEnergy
-      - displayfw
-      - mastermcufw
-      - devicetype
-      - kitSn
       - pvElec
       - useElec
       - buyElec
@@ -105,17 +93,18 @@ Optional sensors when using an Saj Sec Module:
       - selfConsumedRate2
       - selfConsumedEnergy1
       - selfConsumedEnergy2
+      - plantTreeNum
       - reduceCo2
 ```
 
 
 Configuration variables:
 
-- **username** (*Required*): E-mail address used on the eSolar Portal.
-- **password** (*Required*): Password used on the eSolar Portal, we advice you to save it in your secret.yaml.
-- **resources** (*Required*): This section tells the component which values to display.
-- **sensors** (*Optional*): saj_sec # Optional wil only work with SAJ Sec Module
-- **device_id**:** (*Optional*): M123456789234567 # Optional wil only work with SAJ Sec Module
+- **username**   (*Required*): E-mail address used on the eSolar Portal.
+- **password**   (*Required*): Password used on the eSolar Portal, we advice you to save it in your secret.yaml.
+- **resources**  (*Required*): This section tells the component which values to display.
+- **sensors**    (*Optional*): saj_sec # Optional wil only work with SAJ Sec Module
+<!-- - **device_id**: (*Optional*): M123456789234567 # Optional wil only work with SAJ Sec Module -->
 
 ## Screenshot
 
@@ -132,6 +121,10 @@ logger:
   logs:
     custom_components.saj_esolar: debug
 ```
+## Credits
+
+Credits to @cyberjunky. I got inspired by his source code which helped me a lot to create my first Custom Component.
+https://github.com/cyberjunky/home-assistant-toon_smartmeter/
 
 ## Donation
 
