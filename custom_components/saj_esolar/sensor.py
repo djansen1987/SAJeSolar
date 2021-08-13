@@ -220,10 +220,6 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
     ),
-
-
-
-
     SensorEntityDescription(
         key="pvElec",
         name="pvElec",
@@ -302,8 +298,6 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         name="reduceCo2",
         icon="mdi:molecule-co2",
     ),
-
-
     SensorEntityDescription(
         key="totalGridPower",
         name="totalGridPower",
@@ -355,7 +349,6 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     async_add_entities(entities, True)
     return True
 
-# pylint: disable=abstract-method
 class SAJeSolarMeterData(object):
     """Handle eSolar object and limit updates."""
 
@@ -638,42 +631,6 @@ class SAJeSolarMeterData(object):
                     getPlantMeterChartData = await response_getPlantMeterChartData.json()
                     plantDetails.update(getPlantMeterChartData)
 
-
-# # # Get Sec Meter details 1/2
-
-#                     url_getMeterModuleHistoryDataList = "https://fop.saj-electric.com/saj/cloudmonitor/plantMeterModule/getMeterModuleHistoryDataList"
-
-#                     payload_getMeterModuleHistoryDataList = "pageNo=1&pageSize=&plantUid={}&moduleSn={}&chartDateType=1&clientDate={}&chartDay={}&chartMonth={}&chartYear={}".format(plantuid,moduleSn,clientDate,chartDay,chartMonth,chartYear)
-#                     headers_getMeterModuleHistoryDataList = {
-#                         'Connection': 'keep-alive',
-#                         'sec-ch-ua': '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
-#                         'Accept': 'application/json, text/javascript, */*; q=0.01',
-#                         'DNT': '1',
-#                         'X-Requested-With': 'XMLHttpRequest',
-#                         'sec-ch-ua-mobile': '?0',
-#                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36',
-#                         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-#                         'Origin': 'https://fop.saj-electric.com',
-#                         'Sec-Fetch-Site': 'same-origin',
-#                         'Sec-Fetch-Mode': 'cors',
-#                         'Sec-Fetch-Dest': 'empty',
-#                         'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
-#                     }
-
-#                     response_getMeterModuleHistoryDataList = await self._session.post(url_getMeterModuleHistoryDataList, headers=headers_getMeterModuleHistoryDataList, data=payload_getMeterModuleHistoryDataList)
-                
-#                     _LOGGER.debug(response_getMeterModuleHistoryDataList.json())
-#                     _LOGGER.debug(response_getMeterModuleHistoryDataList.text())
-
-#                     if response_getMeterModuleHistoryDataList.status != 200:
-#                         _LOGGER.error(f"{response_getMeterModuleHistoryDataList.url} returned {response_getMeterModuleHistoryDataList.status}")
-#                         return
-                    
-
-#                     getMeterModuleHistoryDataList = await response_getMeterModuleHistoryDataList.json()
-#                     plantDetails.update(getMeterModuleHistoryDataList)
-
-
                     self._data = plantDetails
                     _LOGGER.debug(self._data) 
                     # _LOGGER.debug(self._session.cookie_jar.filter_cookies("https://fop.saj-electric.com"))
@@ -878,7 +835,7 @@ class SAJeSolarMeterSensor(SensorEntity):
                 self._state = float(energy['viewBean']["reduceCo2"])
 
 
-            # dataCountLis
+            # dataCountList
             if self._type == 'totalGridPower':
                 self._state = float(energy['dataCountList'][4][-1])
 

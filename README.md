@@ -67,6 +67,9 @@ sensor:
       - selfConsumedEnergy2
       - plantTreeNum
       - reduceCo2
+      - totalGridPower
+      - totalLoadPower
+      - totalPvgenPower
 ```
 
 If you have a Saj Sec module add the following config under platform:
@@ -95,6 +98,9 @@ Optional sensors when using an Saj Sec Module:
       - selfConsumedEnergy2
       - plantTreeNum
       - reduceCo2
+      - totalGridPower
+      - totalLoadPower
+      - totalPvgenPower
 ```
 
 
