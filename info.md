@@ -33,8 +33,6 @@ sensor:
   - platform: saj_esolar
     username: aa@bb.cc
     password: abcd1234
-    # sensors: saj_sec # Optional wil only work with SAJ Sec Module
-
     resources:
       - nowPower
       - runningState
@@ -54,19 +52,6 @@ sensor:
       - address
       - isOnline
       - peakPower
-      # Optional wil only work with SAJ Sec Module:
-      - pvElec
-      - useElec
-      - buyElec
-      - sellElec
-      - buyRate
-      - sellRate
-      - selfConsumedRate1
-      - selfConsumedRate2
-      - selfConsumedEnergy1
-      - selfConsumedEnergy2
-      - plantTreeNum
-      - reduceCo2
 ```
 
 If you have a Saj Sec module add the following config under platform:
@@ -94,6 +79,9 @@ Optional sensors when using an Saj Sec Module:
       - selfConsumedEnergy2
       - plantTreeNum
       - reduceCo2
+      - totalGridPower
+      - totalLoadPower
+      - totalPvgenPower
 ```
 
 
