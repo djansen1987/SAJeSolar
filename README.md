@@ -8,12 +8,12 @@ The component is build with 1 device to test with used in the Netherlands
 
 ## Installation
 
-<!-- ### HACS - Recommended
+### HACS - Recommended
 - Have [HACS](https://hacs.xyz) installed, this will allow you to easily manage and track updates.
 - Search for 'SAJ eSolar'.
 - Click Install below the found integration.
 - Configure using the configuration instructions below.
-- Restart Home-Assistant. -->
+- Restart Home-Assistant.
 
 ### Manual
 - Copy directory `custom_components/saj_esolar` to your `<config dir>/custom_components` directory.
@@ -76,7 +76,6 @@ If you have a Saj Sec module add the following config under platform:
 
 ```yaml
     sensors: saj_sec # Optional wil only work with SAJ Sec Module
-    # device_id: M123456789234567 # Optional wil only work with SAJ Sec Module
 ```  
 
 <!-- The device_id can be found on the SAJ portal under "Load Monitorring" (Currently have not found a api the outputs the serial numbers, there for it need to be added manualy)

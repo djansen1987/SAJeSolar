@@ -4,6 +4,7 @@ This Sensor will read the private api of the eSolar portal at https://fop.saj-el
 """
 
 import asyncio
+from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from datetime import timedelta
 import datetime
 import calendar
@@ -65,7 +66,7 @@ currentdate = datetime.date.today().strftime('%Y-%m-%d')
 BASE_URL = 'https://fop.saj-electric.com/saj/login'
 _LOGGER = logging.getLogger(__name__)
 
-MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=300)
+MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=5)
 
 SENSOR_PREFIX = 'esolar '
 ATTR_MEASUREMENT = "measurement"
@@ -337,7 +338,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     """Setup the SAJ eSolar sensors."""
 
-    session = async_get_clientsession(hass)
+    session = async_create_clientsession(hass)
     data = SAJeSolarMeterData(session, config.get(CONF_USERNAME), config.get(CONF_PASSWORD), config.get(CONF_SENSORS), config.get(CONF_DEVICE_ID))
     await data.async_update()
 
@@ -368,56 +369,163 @@ class SAJeSolarMeterData(object):
         """Download and update data from SAJeSolar."""
 
         try:
-            with async_timeout.timeout(55):
 
-                today = datetime.date.today()
-                clientDate = today.strftime('%Y-%m-%d')
+            today = datetime.date.today()
+            clientDate = today.strftime('%Y-%m-%d')
+            _LOGGER.debug(" - ")
+            _LOGGER.debug("clientDate: ")
+            _LOGGER.debug(clientDate)
+            _LOGGER.debug(" - ")
+            
 
-# Login to eSolar API
+            # Login to eSolar API
+            url = 'https://fop.saj-electric.com/saj/login'
+            payload = {
+                'lang': 'en',
+                'username': self.username,
+                'password': self.password,
+                'rememberMe': 'true'
+            }
+            headers = {
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Cache-Control': 'max-age=0',
+                'Connection': 'keep-alive',
+                'Content-Length': '79',
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Cookie': 'org.springframework.web.servlet.i18n.CookieLocaleResolver.LOCALE=en; op_esolar_lang=en',
+                'DNT': '1',
+                'Host': 'fop.saj-electric.com',
+                'Origin': 'https://fop.saj-electric.com',
+                'Referer': 'https://fop.saj-electric.com/saj/login',
+                'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
+                'sec-ch-ua-mobile': '?0',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'same-origin',
+                'Sec-Fetch-User': '?1',
+                'Upgrade-Insecure-Requests': '1',
+                'User-Agent'
+                : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36'
+            }
+            response = await self._session.post(url, headers=headers, data=payload)
 
-                url = 'https://fop.saj-electric.com/saj/login'
-                payload = {
-                    'lang': 'en',
-                    'username': self.username,
-                    'password': self.password,
-                    'rememberMe': 'true'
-                }
-                headers = {
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-                    'Accept-Encoding': 'gzip, deflate, br',
-                    'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7',
-                    'Cache-Control': 'max-age=0',
-                    'Connection': 'keep-alive',
-                    'Content-Length': '79',
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Cookie': 'org.springframework.web.servlet.i18n.CookieLocaleResolver.LOCALE=en; op_esolar_lang=en',
-                    'DNT': '1',
-                    'Host': 'fop.saj-electric.com',
-                    'Origin': 'https://fop.saj-electric.com',
-                    'Referer': 'https://fop.saj-electric.com/saj/login',
-                    'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
-                    'sec-ch-ua-mobile': '?0',
-                    'Sec-Fetch-Dest': 'document',
-                    'Sec-Fetch-Mode': 'navigate',
-                    'Sec-Fetch-Site': 'same-origin',
-                    'Sec-Fetch-User': '?1',
-                    'Upgrade-Insecure-Requests': '1',
-                    'User-Agent'
-                    : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36'
-                }
-                response = await self._session.post(url, headers=headers, data=payload)
+            if response.status != 200:
+                _LOGGER.error(f"{response.url} returned {response.status}")
+                return
 
-                _LOGGER.debug(response.json())
-                _LOGGER.debug(response.text())
 
-                if response.status != 200:
-                    _LOGGER.error(f"{response.url} returned {response.status}")
-                    return
+            # Get API Plant info from Esolar Portal
+            url2 = 'https://fop.saj-electric.com/saj/monitor/site/getUserPlantList'
+            headers2 = {
+                'Connection': 'keep-alive',
+                'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
+                'Accept': 'application/json, text/javascript, */*; q=0.01',
+                'DNT': '1',
+                'X-Requested-With': 'XMLHttpRequest',
+                'sec-ch-ua-mobile': '?0',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'Origin': 'https://fop.saj-electric.com',
+                'Sec-Fetch-Site': 'same-origin',
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Dest': 'empty',
+                'Referer': 'https://fop.saj-electric.com/saj/monitor/site/list',
+                'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
+            }
 
-# Get API Plant info from Esolar Portal
+            payload2= "pageNo=&pageSize=&orderByIndex=&officeId=&clientDate={}&runningState=&selectInputType=1&plantName=&deviceSn=&type=&countryCode=&isRename=&isTimeError=&systemPowerLeast=&systemPowerMost=".format(clientDate)
+            response2 = await self._session.post(url2, headers=headers2, data=payload2)
 
-                url2 = 'https://fop.saj-electric.com/saj/monitor/site/getUserPlantList'
-                headers2 = {
+            if response2.status != 200:
+                _LOGGER.error(f"{response2.url} returned {response2.status}")
+                return
+
+            plantInfo = await response2.json()
+            plantuid = plantInfo['plantList'][0]['plantuid']
+
+            
+            # Get API Plant Solar Details
+            url3 = "https://fop.saj-electric.com/saj/monitor/site/getPlantDetailInfo"   
+            payload3="plantuid={}&clientDate={}".format(plantuid,currentdate)
+            headers3 = {
+                'Connection': 'keep-alive',
+                'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
+                'Accept': 'application/json, text/javascript, */*; q=0.01',
+                'DNT': '1',
+                'X-Requested-With': 'XMLHttpRequest',
+                'sec-ch-ua-mobile': '?0',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Safari/537.36',
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'Origin': 'https://fop.saj-electric.com',
+                'Sec-Fetch-Site': 'same-origin',
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Dest': 'empty',
+                'Referer': 'https://fop.saj-electric.com/saj/monitor/home/index',
+                'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
+            }
+            response3 = await self._session.post(url3, headers=headers3, data=payload3)
+
+            if response3.status != 200:
+                _LOGGER.error(f"{response3.url} returned {response3.status}")
+                return
+
+            plantDetails = await response3.json()
+            plantDetails.update(plantInfo)
+
+
+            # getPlantDetailChart2
+            plantuid = plantDetails['plantList'][0]['plantuid']
+            deviceSnArr = plantDetails['plantDetail']['snList'][0]
+            previousChartDay = today - timedelta(days=1)               
+            nextChartDay = today + timedelta(days = 1) 
+            chartDay = today.strftime('%Y-%m-%d')
+            previousChartMonth = add_months(today,-1).strftime('%Y-%m')
+            nextChartMonth = add_months(today, 1).strftime('%Y-%m')
+            chartMonth = today.strftime('%Y-%m')
+            previousChartYear = add_years(today, -1).strftime('%Y')
+            nextChartYear = add_years(today, 1).strftime('%Y')
+            chartYear = today.strftime('%Y')
+            epochmilliseconds = round(int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds() * 1000))            
+                            
+            url4 = "https://fop.saj-electric.com/saj/monitor/site/getPlantDetailChart2?plantuid={}&chartDateType=1&energyType=0&clientDate={}&deviceSnArr={}&chartCountType=2&previousChartDay={}&nextChartDay={}&chartDay={}&previousChartMonth={}&nextChartMonth={}&chartMonth={}&previousChartYear={}&nextChartYear={}&chartYear={}&elecDevicesn=&_={}".format(plantuid,clientDate,deviceSnArr,previousChartDay,nextChartDay,chartDay,previousChartMonth,nextChartMonth,chartMonth,previousChartYear,nextChartYear,chartYear,epochmilliseconds)
+            headers4 = {
+                'Connection': 'keep-alive',
+                'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
+                'Accept': 'application/json, text/javascript, */*; q=0.01',
+                'DNT': '1',
+                'X-Requested-With': 'XMLHttpRequest',
+                'sec-ch-ua-mobile': '?0',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+                'Sec-Fetch-Site': 'same-origin',
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Dest': 'empty',
+                'Referer': 'https://fop.saj-electric.com/saj/monitor/home/index',
+                'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
+            }
+
+            response4 = await self._session.post(url4, headers=headers4)
+
+            if response4.status != 200:
+                _LOGGER.error(f"{response4.url} returned {response4.status}")
+                return
+
+            plantcharts = await response4.json()
+            plantDetails.update(plantcharts)
+
+
+
+            # Sec module
+            if self.sensors == "saj_sec":
+
+                _LOGGER.debug("saj_sec active")
+                # getPlantMeterModuleList
+                url_module = "https://fop.saj-electric.com/saj/cloudmonitor/plantMeterModule/getPlantMeterModuleList"
+
+                payload_module = "pageNo=&pageSize=&plantUid={}".format(plantuid)
+                headers_module = {
                     'Connection': 'keep-alive',
                     'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
                     'Accept': 'application/json, text/javascript, */*; q=0.01',
@@ -425,78 +533,29 @@ class SAJeSolarMeterData(object):
                     'X-Requested-With': 'XMLHttpRequest',
                     'sec-ch-ua-mobile': '?0',
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                    'Origin': 'https://fop.saj-electric.com',
-                    'Sec-Fetch-Site': 'same-origin',
-                    'Sec-Fetch-Mode': 'cors',
-                    'Sec-Fetch-Dest': 'empty',
-                    'Referer': 'https://fop.saj-electric.com/saj/monitor/site/list',
-                    'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
-                }
-
-                payload2= "pageNo=&pageSize=&orderByIndex=&officeId=&clientDate={}&runningState=&selectInputType=1&plantName=&deviceSn=&type=&countryCode=&isRename=&isTimeError=&systemPowerLeast=&systemPowerMost=".format(clientDate)
-                response2 = await self._session.post(url2, headers=headers2, data=payload2)
-
-                _LOGGER.debug(response2.json())
-                _LOGGER.debug(response2.text())
-
-                if response2.status != 200:
-                    _LOGGER.error(f"{response2.url} returned {response2.status}")
-                    return
-
-                plantInfo = await response2.json()
-                plantuid = plantInfo['plantList'][0]['plantuid']
-
-# Get API Plant Solar Details
-
-                url3 = "https://fop.saj-electric.com/saj/monitor/site/getPlantDetailInfo"   
-                payload3="plantuid={}&clientDate={}".format(plantuid,currentdate)
-                headers3 = {
-                    'Connection': 'keep-alive',
-                    'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
-                    'Accept': 'application/json, text/javascript, */*; q=0.01',
-                    'DNT': '1',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'sec-ch-ua-mobile': '?0',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Safari/537.36',
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                    'Origin': 'https://fop.saj-electric.com',
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
                     'Sec-Fetch-Site': 'same-origin',
                     'Sec-Fetch-Mode': 'cors',
                     'Sec-Fetch-Dest': 'empty',
                     'Referer': 'https://fop.saj-electric.com/saj/monitor/home/index',
                     'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
-                }
-                response3 = await self._session.post(url3, headers=headers3, data=payload3)
+                }                  
                 
-                _LOGGER.debug(response3.json())
-                _LOGGER.debug(response3.text())
-
-                if response3.status != 200:
-                    _LOGGER.error(f"{response3.url} returned {response3.status}")
+                response_module = await self._session.post(url_module, headers=headers_module, data=payload_module)
+            
+                if response_module.status != 200:
+                    _LOGGER.error(f"{response_module.url} returned {response_module.status}")
                     return
 
-                plantDetails = await response3.json()
-                plantDetails.update(plantInfo)
+                getPlantMeterModuleList = await response_module.json()
+                plantDetails.update(getPlantMeterModuleList)
 
 
-# getPlantDetailChart2
+                # findDevicePageList
+                url_findDevicePageList = "https://fop.saj-electric.com/saj/cloudMonitor/device/findDevicePageList"
 
-                plantuid = plantDetails['plantList'][0]['plantuid']
-                deviceSnArr = plantDetails['plantDetail']['snList'][0]
-                previousChartDay = today - timedelta(days=1)               
-                nextChartDay = today + timedelta(days = 1) 
-                chartDay = today.strftime('%Y-%m-%d')
-                previousChartMonth = add_months(today,-1).strftime('%Y-%m')
-                nextChartMonth = add_months(today, 1).strftime('%Y-%m')
-                chartMonth = today.strftime('%Y-%m')
-                previousChartYear = add_years(today, -1).strftime('%Y')
-                nextChartYear = add_years(today, 1).strftime('%Y')
-                chartYear = today.strftime('%Y')
-                epochmilliseconds = round(int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds() * 1000))            
-                                
-                url4 = "https://fop.saj-electric.com/saj/monitor/site/getPlantDetailChart2?plantuid={}&chartDateType=1&energyType=0&clientDate={}&deviceSnArr={}&chartCountType=2&previousChartDay={}&nextChartDay={}&chartDay={}&previousChartMonth={}&nextChartMonth={}&chartMonth={}&previousChartYear={}&nextChartYear={}&chartYear={}&elecDevicesn=&_={}".format(plantuid,clientDate,deviceSnArr,previousChartDay,nextChartDay,chartDay,previousChartMonth,nextChartMonth,chartMonth,previousChartYear,nextChartYear,chartYear,epochmilliseconds)
-                headers4 = {
+                payload_findDevicePageList = "officeId=1&pageNo=&pageSize=&orderName=1&orderType=2&plantuid={}&deviceStatus=&localDate={}&localMonth={}".format(plantuid,chartMonth,chartMonth)
+                headers_findDevicePageList = {
                     'Connection': 'keep-alive',
                     'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
                     'Accept': 'application/json, text/javascript, */*; q=0.01',
@@ -512,141 +571,54 @@ class SAJeSolarMeterData(object):
                     'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
                 }
 
-                response4 = await self._session.post(url4, headers=headers4)
+                response_findDevicePageList = await self._session.post(url_findDevicePageList, headers=headers_findDevicePageList, data=payload_findDevicePageList)
 
-                _LOGGER.debug(response4.json())
-                _LOGGER.debug(response4.text())
-
-                if response4.status != 200:
-                    _LOGGER.error(f"{response4.url} returned {response4.status}")
+                if response_findDevicePageList.status != 200:
+                    _LOGGER.error(f"{response_findDevicePageList.url} returned {response_findDevicePageList.status}")
                     return
 
-                plantcharts = await response4.json()
-                plantDetails.update(plantcharts)
+                findDevicePageList = await response_findDevicePageList.json()
+                plantDetails.update(findDevicePageList)
+                moduleSn = plantDetails['moduleList'][0]['moduleSn']
 
-
-
-
-                if self.sensors == "saj_sec":
-# getPlantMeterModuleList
-                    url_module = "https://fop.saj-electric.com/saj/cloudmonitor/plantMeterModule/getPlantMeterModuleList"
-
-                    payload_module = "pageNo=&pageSize=&plantUid={}".format(plantuid)
-                    headers_module = {
-                        'Connection': 'keep-alive',
-                        'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
-                        'Accept': 'application/json, text/javascript, */*; q=0.01',
-                        'DNT': '1',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'sec-ch-ua-mobile': '?0',
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                        'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
-                        'Sec-Fetch-Site': 'same-origin',
-                        'Sec-Fetch-Mode': 'cors',
-                        'Sec-Fetch-Dest': 'empty',
-                        'Referer': 'https://fop.saj-electric.com/saj/monitor/home/index',
-                        'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
-                    }                  
-                    
-                    response_module = await self._session.post(url_module, headers=headers_module, data=payload_module)
                 
-                    _LOGGER.debug(response_module.json())
-                    _LOGGER.debug(response_module.text())
+                # Get Sec Meter details
+                url_getPlantMeterChartData = "https://fop.saj-electric.com/saj/monitor/site/getPlantMeterChartData?plantuid={}&chartDateType=1&energyType=0&clientDate={}&deviceSnArr=&chartCountType=2&previousChartDay={}&nextChartDay={}&chartDay={}&previousChartMonth={}&nextChartMonth={}&chartMonth={}&previousChartYear={}&nextChartYear={}&chartYear={}&moduleSn={}&_={}".format(plantuid,clientDate,previousChartDay,nextChartDay,chartDay,previousChartMonth,nextChartMonth,chartMonth,previousChartYear,nextChartYear,chartYear,moduleSn,epochmilliseconds)
 
-                    if response_module.status != 200:
-                        _LOGGER.error(f"{response_module.url} returned {response_module.status}")
-                        return
+                headers_getPlantMeterChartData = {
+                    'Connection': 'keep-alive',
+                    'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
+                    'Accept': 'application/json, text/javascript, */*; q=0.01',
+                    'DNT': '1',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'sec-ch-ua-mobile': '?0',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+                    'Sec-Fetch-Site': 'same-origin',
+                    'Sec-Fetch-Mode': 'cors',
+                    'Sec-Fetch-Dest': 'empty',
+                    'Referer': 'https://fop.saj-electric.com/saj/monitor/home/index',
+                    'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
+                }
 
-                    getPlantMeterModuleList = await response_module.json()
-                    plantDetails.update(getPlantMeterModuleList)
-                    _LOGGER.debug(getPlantMeterModuleList)
+                response_getPlantMeterChartData = await self._session.post(url_getPlantMeterChartData, headers=headers_getPlantMeterChartData)
 
-# findDevicePageList
+                if response_getPlantMeterChartData.status != 200:
+                    _LOGGER.error(f"{response_getPlantMeterChartData.url} returned {response_getPlantMeterChartData.status}")
+                    return
 
-                    url_findDevicePageList = "https://fop.saj-electric.com/saj/cloudMonitor/device/findDevicePageList"
-
-                    payload_findDevicePageList = "officeId=1&pageNo=&pageSize=&orderName=1&orderType=2&plantuid={}&deviceStatus=&localDate={}&localMonth={}".format(plantuid,chartMonth,chartMonth)
-                    headers_findDevicePageList = {
-                        'Connection': 'keep-alive',
-                        'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
-                        'Accept': 'application/json, text/javascript, */*; q=0.01',
-                        'DNT': '1',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'sec-ch-ua-mobile': '?0',
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                        'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
-                        'Sec-Fetch-Site': 'same-origin',
-                        'Sec-Fetch-Mode': 'cors',
-                        'Sec-Fetch-Dest': 'empty',
-                        'Referer': 'https://fop.saj-electric.com/saj/monitor/home/index',
-                        'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
-                    }
-
-                    response_findDevicePageList = await self._session.post(url_findDevicePageList, headers=headers_findDevicePageList, data=payload_findDevicePageList)
+                getPlantMeterChartData = await response_getPlantMeterChartData.json()
+                plantDetails.update(getPlantMeterChartData)
                 
-                    _LOGGER.debug(response_findDevicePageList.json())
-                    _LOGGER.debug(response_findDevicePageList.text())
-
-                    if response_findDevicePageList.status != 200:
-                        _LOGGER.error(f"{response_findDevicePageList.url} returned {response_findDevicePageList.status}")
-                        return
-
-                    findDevicePageList = await response_findDevicePageList.json()
-                    plantDetails.update(findDevicePageList)
-
-                    
-                    # Get Sec Meter details 1/2
-                    # moduleSn = self.sec_sn #plantDetails['list'][0]['kitSn']
-                    moduleSn = plantDetails['moduleList'][0]['moduleSn']
-                    # _LOGGER.warning(moduleSn)
-
-                    url_getPlantMeterChartData = "https://fop.saj-electric.com/saj/monitor/site/getPlantMeterChartData?plantuid={}&chartDateType=1&energyType=0&clientDate={}&deviceSnArr=&chartCountType=2&previousChartDay={}&nextChartDay={}&chartDay={}&previousChartMonth={}&nextChartMonth={}&chartMonth={}&previousChartYear={}&nextChartYear={}&chartYear={}&moduleSn={}&_={}".format(plantuid,clientDate,previousChartDay,nextChartDay,chartDay,previousChartMonth,nextChartMonth,chartMonth,previousChartYear,nextChartYear,chartYear,moduleSn,epochmilliseconds)
-                    # _LOGGER.warning(url6)
-
-                    headers_getPlantMeterChartData = {
-                        'Connection': 'keep-alive',
-                        'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
-                        'Accept': 'application/json, text/javascript, */*; q=0.01',
-                        'DNT': '1',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'sec-ch-ua-mobile': '?0',
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                        'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
-                        'Sec-Fetch-Site': 'same-origin',
-                        'Sec-Fetch-Mode': 'cors',
-                        'Sec-Fetch-Dest': 'empty',
-                        'Referer': 'https://fop.saj-electric.com/saj/monitor/home/index',
-                        'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
-                    }
-
-                    response_getPlantMeterChartData = await self._session.post(url_getPlantMeterChartData, headers=headers_getPlantMeterChartData)
-                
-                    _LOGGER.debug(response_getPlantMeterChartData.json())
-                    _LOGGER.debug(response_getPlantMeterChartData.text())
-
-                    if response_getPlantMeterChartData.status != 200:
-                        _LOGGER.error(f"{response_getPlantMeterChartData.url} returned {response_getPlantMeterChartData.status}")
-                        return
-
-                    getPlantMeterChartData = await response_getPlantMeterChartData.json()
-                    plantDetails.update(getPlantMeterChartData)
-
-                    self._data = plantDetails
-                    _LOGGER.debug(self._data) 
-                    # _LOGGER.debug(self._session.cookie_jar.filter_cookies("https://fop.saj-electric.com"))
-                    # self._session.cookie_jar.clear()
-                elif self.sensors == "None":
-                    self._data = plantDetails
-                    _LOGGER.debug(self._data) 
-                    # _LOGGER.debug(self._session.cookie_jar.filter_cookies("https://fop.saj-electric.com"))
-                    # self._session.cookie_jar.clear()
-                else:
-                    self._data = plantDetails
-                    _LOGGER.debug(self._data) 
-                
-                _LOGGER.debug(self._session.cookie_jar.filter_cookies("https://fop.saj-electric.com"))
-                self._session.cookie_jar.clear()
-
+                # Data = plantdetails including Sec module
+                self._data = plantDetails
+            elif self.sensors == "None":
+                self._data = plantDetails
+            else:
+                # Data = plantdetails Wtihout Sec module
+                self._data = plantDetails
+            
+        # Error logging
         except aiohttp.ClientError:
             _LOGGER.error("Cannot poll eSolar using url: %s")
             return
@@ -658,11 +630,46 @@ class SAJeSolarMeterData(object):
             self._data = None
             return
 
+
+        # Print Cookies and Data
+        _LOGGER.debug(self._session.cookie_jar.filter_cookies("https://fop.saj-electric.com"))
+        _LOGGER.debug(self._data)
+
+
+        # logout session
+        url_logout = "https://fop.saj-electric.com/saj/logout"
+        headers_logoff = {
+            'Connection': 'keep-alive',
+            'sec-ch-ua': '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
+            'sec-ch-ua-mobile': '?0',
+            'Upgrade-Insecure-Requests': '1',
+            'DNT': '1',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+            'Sec-Fetch-Site': 'same-origin',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-User': '?1',
+            'Sec-Fetch-Dest': 'document',
+            'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
+        }
+
+        response_logout = await self._session.post(url_logout, headers=headers_logoff)
+    
+        if response_logout.status != 200:
+            _LOGGER.error(f"{response_logout.url} returned {response_logout.status}")
+            return
+
+
+        # Clear session and cookies
+        self._session.cookie_jar.clear()
+        self._session.close()
+
     @property
     def latest_data(self):
         """Return the latest data object."""
         if self._data:
             return self._data
+
         _LOGGER.error("return data NONE")
         return None
 
@@ -736,113 +743,172 @@ class SAJeSolarMeterSensor(SensorEntity):
         energy = self._data.latest_data
 
         if energy:
-            
+
+
             if self._type == 'nowPower':
-                self._state = float(energy['plantDetail']["nowPower"])
-
+                if 'nowPower' in energy['plantDetail']:
+                    if energy['plantDetail']["nowPower"] is not None:
+                        self._state = float(energy['plantDetail']["nowPower"])
             if self._type == 'runningState':
-                self._state = int(energy['plantDetail']["runningState"])
-
+                if 'runningState' in energy['plantDetail']:
+                    if energy['plantDetail']["runningState"] is not None:
+                        self._state = int(energy['plantDetail']["runningState"])
             if self._type == 'todayElectricity':
-                self._state = float(energy['plantDetail']["todayElectricity"])
-
+                if 'todayElectricity' in energy['plantDetail']:
+                    if energy['plantDetail']["todayElectricity"] is not None:
+                        self._state = float(energy['plantDetail']["todayElectricity"])
             if self._type == 'monthElectricity':
-                self._state = float(energy['plantDetail']["monthElectricity"])
-
+                if 'monthElectricity' in energy['plantDetail']:
+                    if energy['plantDetail']["monthElectricity"] is not None:
+                        self._state = float(energy['plantDetail']["monthElectricity"])
             if self._type == 'yearElectricity':
-                self._state = float(energy['plantDetail']["yearElectricity"])
-
+                if 'yearElectricity' in energy['plantDetail']:
+                    if energy['plantDetail']["yearElectricity"] is not None:
+                        self._state = float(energy['plantDetail']["yearElectricity"])
             if self._type == 'totalElectricity':
-                self._state = float(energy['plantDetail']["totalElectricity"])
-
+                if 'totalElectricity' in energy['plantDetail']:
+                    if energy['plantDetail']["totalElectricity"] is not None:
+                        self._state = float(energy['plantDetail']["totalElectricity"])
             if self._type == 'todayGridIncome':
-                self._state = float(energy['plantDetail']["todayGridIncome"])
-
+                if 'todayGridIncome' in energy['plantDetail']:
+                    if energy['plantDetail']["todayGridIncome"] is not None:
+                        self._state = float(energy['plantDetail']["todayGridIncome"])
             if self._type == 'income':
-                self._state = float(energy['plantDetail']["income"])
+                if 'income' in energy['plantDetail']:
+                    if energy['plantDetail']["income"] is not None:
+                        self._state = float(energy['plantDetail']["income"])
 
-            if self._type == 'lastUploadTime':
-                self._state = (energy['plantDetail']["lastUploadTime"])
-
-            if self._type == 'totalPlantTreeNum':
-                self._state = (energy['plantDetail']["totalPlantTreeNum"])
-
-            if self._type == 'totalReduceCo2':
-                self._state = (energy['plantDetail']["totalReduceCo2"])
 
             if self._type == 'todayAlarmNum':
-                self._state = (energy['plantDetail']["todayAlarmNum"])
+                if 'todayAlarmNum' in energy['plantDetail']:
+                    if energy['plantDetail']["todayAlarmNum"] is not None:
+                        self._state = (energy['plantDetail']["todayAlarmNum"])
+            if self._type == 'todayAlarmNum':
+                if 'todayAlarmNum' in energy['plantDetail']:
+                    if energy['plantDetail']["todayAlarmNum"] is not None:
+                        self._state = (energy['plantDetail']["todayAlarmNum"])
+            if self._type == 'lastUploadTime':
+                if 'lastUploadTime' in energy['plantDetail']:
+                    if energy['plantDetail']["lastUploadTime"] is not None:
+                        self._state = (energy['plantDetail']["lastUploadTime"])
+            if self._type == 'totalPlantTreeNum':
+                if 'totalPlantTreeNum' in energy['plantDetail']:
+                    if energy['plantDetail']["totalPlantTreeNum"] is not None:
+                        self._state = (energy['plantDetail']["totalPlantTreeNum"])
+            if self._type == 'totalReduceCo2':
+                if 'totalReduceCo2' in energy['plantDetail']:
+                    if energy['plantDetail']["totalReduceCo2"] is not None:
+                        self._state = (energy['plantDetail']["totalReduceCo2"])
+            if self._type == 'todayAlarmNum':
+                if 'todayAlarmNum' in energy['plantDetail']:
+                    if energy['plantDetail']["todayAlarmNum"] is not None:
+                        self._state = (energy['plantDetail']["todayAlarmNum"])
 
-            if self._type == 'plantuid':
-                self._state = (energy['plantList'][0]["plantuid"])
-
-            if self._type == 'plantname':
-                self._state = (energy['plantList'][0]["plantname"])
 
             if self._type == 'currency':
-                self._state = (energy['plantList'][0]["currency"])
-
-            if self._type == 'address':
-                self._state = (energy['plantList'][0]["address"])
-
+                if 'currency' in energy['plantList'][0]:
+                    if energy['plantList'][0]["currency"] is not None:
+                        self._state = (energy['plantList'][0]["currency"])
+            if self._type == 'plantuid':
+                if 'plantuid' in energy['plantList'][0]:
+                    if energy['plantList'][0]["plantuid"] is not None:
+                        self._state = (energy['plantList'][0]["plantuid"])
+            if self._type == 'plantname':
+                if 'plantname' in energy['plantList'][0]:
+                    if energy['plantList'][0]["plantname"] is not None:
+                        self._state = (energy['plantList'][0]["plantname"])
+            if self._type == 'currency':
+                if 'currency' in energy['plantList'][0]:
+                    if energy['plantList'][0]["currency"] is not None:
+                        self._state = (energy['plantList'][0]["currency"])
             if self._type == 'isOnline':
-                self._state = (energy['plantList'][0]["isOnline"])
+                if 'isOnline' in energy['plantList'][0]:
+                    if energy['plantList'][0]["isOnline"] is not None:
+                        self._state = (energy['plantList'][0]["isOnline"])
+            if self._type == 'address':
+                if 'address' in energy['plantList'][0]:
+                    if energy['plantList'][0]["address"] is not None:
+                        self._state = (energy['plantList'][0]["address"])
+
 
             if self._type == 'peakPower':
                 if 'peakPower' in energy:
-                    if energy['peakPower'] is not None:
-                        self._state = float(energy['peakPower'])
-
+                    if energy["peakPower"] is not None:
+                        self._state = float(energy["peakPower"])
             if self._type == 'status':
-                self._state = (energy['status'])
-
+                if 'status' in energy:
+                    if energy["status"] is not None:
+                        self._state = (energy["status"])
 
 
             # Sec module Sensors:
 
             # viewBeam
             if self._type == 'pvElec':
-                self._state = float(energy['viewBean']["pvElec"])
-                
+                if 'pvElec' in energy['viewBean']:
+                    if energy['viewBean']["pvElec"] is not None:
+                        self._state = float(energy['viewBean']["pvElec"])
             if self._type == 'useElec':
-                self._state = float(energy['viewBean']["useElec"])
-
+                if 'useElec' in energy['viewBean']:
+                    if energy['viewBean']["useElec"] is not None:
+                        self._state = float(energy['viewBean']["useElec"])
             if self._type == 'buyElec':
-                self._state = float(energy['viewBean']["buyElec"])
-
+                if 'buyElec' in energy['viewBean']:
+                    if energy['viewBean']["buyElec"] is not None:
+                        self._state = float(energy['viewBean']["buyElec"])
             if self._type == 'sellElec':
-                self._state = float(energy['viewBean']["sellElec"])
+                if 'sellElec' in energy['viewBean']:
+                    if energy['viewBean']["sellElec"] is not None:
+                        self._state = float(energy['viewBean']["sellElec"])
+            if self._type == 'selfConsumedEnergy1':
+                if 'selfConsumedEnergy1' in energy['viewBean']:
+                    if energy['viewBean']["selfConsumedEnergy1"] is not None:
+                        self._state = float(energy['viewBean']["selfConsumedEnergy1"])
+            if self._type == 'selfConsumedEnergy2':
+                if 'selfConsumedEnergy2' in energy['viewBean']:
+                    if energy['viewBean']["selfConsumedEnergy2"] is not None:
+                        self._state = float(energy['viewBean']["selfConsumedEnergy2"])
+            if self._type == 'reduceCo2':
+                if 'reduceCo2' in energy['viewBean']:
+                    if energy['viewBean']["reduceCo2"] is not None:
+                        self._state = float(energy['viewBean']["reduceCo2"])
+
 
             if self._type == 'buyRate':
-                self._state = (energy['viewBean']["buyRate"])
-
+                if 'buyRate' in energy['viewBean']:
+                    if energy['viewBean']["buyRate"] is not None:
+                        self._state = (energy['viewBean']["buyRate"])
             if self._type == 'sellRate':
-                self._state = (energy['viewBean']["sellRate"])
-
+                if 'sellRate' in energy['viewBean']:
+                    if energy['viewBean']["sellRate"] is not None:
+                        self._state = (energy['viewBean']["sellRate"])
             if self._type == 'selfConsumedRate1':
-                self._state = (energy['viewBean']["selfConsumedRate1"])
-
+                if 'selfConsumedRate1' in energy['viewBean']:
+                    if energy['viewBean']["selfConsumedRate1"] is not None:
+                        self._state = (energy['viewBean']["selfConsumedRate1"])
             if self._type == 'selfConsumedRate2':
-                self._state = (energy['viewBean']["selfConsumedRate2"])
-
-            if self._type == 'selfConsumedEnergy1':
-                self._state = float(energy['viewBean']["selfConsumedEnergy1"])
-
-            if self._type == 'selfConsumedEnergy2':
-                self._state = float(energy['viewBean']["selfConsumedEnergy2"])
-
-            if self._type == 'reduceCo2':
-                self._state = float(energy['viewBean']["reduceCo2"])
-
+                if 'selfConsumedRate2' in energy['viewBean']:
+                    if energy['viewBean']["selfConsumedRate2"] is not None:
+                        self._state = (energy['viewBean']["selfConsumedRate2"])
+            if self._type == 'plantTreeNum':
+                if 'plantTreeNum' in energy['viewBean']:
+                    if energy['viewBean']["plantTreeNum"] is not None:
+                        self._state = (energy['viewBean']["plantTreeNum"])
+                                               
 
             # dataCountList
             if self._type == 'totalGridPower':
-                self._state = float(energy['dataCountList'][4][-1])
-
+                if 'dataCountList' in energy:
+                    if energy['dataCountList'][4][-1] is not None:
+                        self._state = float(energy['dataCountList'][4][-1])
             if self._type == 'totalLoadPower':
-                self._state = float(energy['dataCountList'][2][-1])
-
+                if 'dataCountList' in energy:
+                    if energy['dataCountList'][4][-1] is not None:
+                        self._state = float(energy['dataCountList'][2][-1])
             if self._type == 'totalPvgenPower':
-                self._state = float(energy['dataCountList'][3][-1])
+                if 'dataCountList' in energy:
+                    if energy['dataCountList'][4][-1] is not None:
+                        self._state = float(energy['dataCountList'][3][-1])
 
-            _LOGGER.debug("Device: {} State: {}".format(self._type, self._state)) #debug
+
+            _LOGGER.debug("Device: {} State: {}".format(self._type, self._state))
