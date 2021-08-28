@@ -61,7 +61,7 @@ def add_years(d, years):
     except ValueError:
         return d + (date(d.year + years, 1, 1) - date(d.year, 1, 1))
 
-currentdate = datetime.date.today().strftime('%Y-%m-%d')
+#currentdate = datetime.date.today().strftime('%Y-%m-%d')
 
 BASE_URL = 'https://fop.saj-electric.com/saj/login'
 _LOGGER = logging.getLogger(__name__)
@@ -448,7 +448,7 @@ class SAJeSolarMeterData(object):
             
             # Get API Plant Solar Details
             url3 = "https://fop.saj-electric.com/saj/monitor/site/getPlantDetailInfo"   
-            payload3="plantuid={}&clientDate={}".format(plantuid,currentdate)
+            payload3="plantuid={}&clientDate={}".format(plantuid,clientDate)
             headers3 = {
                 'Connection': 'keep-alive',
                 'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
