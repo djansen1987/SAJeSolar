@@ -22,6 +22,7 @@ from homeassistant.components.sensor import (
     ATTR_STATE_CLASS,
     PLATFORM_SCHEMA,
     STATE_CLASS_MEASUREMENT,
+    STATE_CLASS_TOTAL_INCREASING,
     SensorEntity,
     SensorEntityDescription,
 )
@@ -128,7 +129,6 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         icon="mdi:solar-panel-large",
         unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
-        state_class=STATE_CLASS_MEASUREMENT,
     ),
     SensorEntityDescription(
         key="monthElectricity",
@@ -136,7 +136,6 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         icon="mdi:solar-panel-large",
         unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
-        state_class=STATE_CLASS_MEASUREMENT,
     ),
     SensorEntityDescription(
         key="yearElectricity",
@@ -144,7 +143,6 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         icon="mdi:solar-panel-large",
         unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
-        state_class=STATE_CLASS_MEASUREMENT,
     ),
     SensorEntityDescription(
         key="totalElectricity",
@@ -152,7 +150,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         icon="mdi:solar-panel-large",
         unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
-        state_class=STATE_CLASS_MEASUREMENT,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
     ),
     SensorEntityDescription(
         key="todayGridIncome",
@@ -900,7 +898,7 @@ class SAJeSolarMeterSensor(SensorEntity):
             if self._type == 'totalGridPower':
                 if 'dataCountList' in energy:
                     if energy['dataCountList'][4][-1] is not None:
-                        self._state = float(energy['dataCountList'][4][-1])
+                        self._state = float(energy['dataCountList'][3][-1])
             if self._type == 'totalLoadPower':
                 if 'dataCountList' in energy:
                     if energy['dataCountList'][4][-1] is not None:
@@ -908,7 +906,7 @@ class SAJeSolarMeterSensor(SensorEntity):
             if self._type == 'totalPvgenPower':
                 if 'dataCountList' in energy:
                     if energy['dataCountList'][4][-1] is not None:
-                        self._state = float(energy['dataCountList'][3][-1])
+                        self._state = float(energy['dataCountList'][4][-1])
 
 
             _LOGGER.debug("Device: {} State: {}".format(self._type, self._state))
