@@ -82,6 +82,10 @@ Optional sensors when using an Saj Sec Module:
       - totalGridPower
       - totalLoadPower
       - totalPvgenPower
+      - totalPvEnergy
+      - totalLoadEnergy
+      - totalBuyEnergy
+      - totalSellEnergy
 ```
 
 

@@ -18,31 +18,22 @@ import async_timeout
 import voluptuous as vol
 
 from homeassistant.components.sensor import (
-    ATTR_LAST_RESET,
-    ATTR_STATE_CLASS,
     PLATFORM_SCHEMA,
     STATE_CLASS_TOTAL_INCREASING,
     SensorEntity,
     SensorEntityDescription,
 )
 from homeassistant.const import (
-    ATTR_DEVICE_CLASS,
-    ATTR_ICON,
-    ATTR_NAME,
-    ATTR_UNIT_OF_MEASUREMENT,
-    CONF_HOST,
-    CONF_PORT,
     CONF_RESOURCES,
     CONF_USERNAME, 
     CONF_PASSWORD, 
     CONF_SENSORS,
     CONF_DEVICE_ID,
-    CONF_SCAN_INTERVAL,
     DEVICE_CLASS_ENERGY,
     DEVICE_CLASS_POWER,
     ENERGY_KILO_WATT_HOUR,
     POWER_WATT,
-    VOLUME_CUBIC_METERS,
+
 )
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
@@ -400,12 +391,7 @@ class SAJeSolarMeterData(object):
         try:
 
             today = datetime.date.today()
-            clientDate = today.strftime('%Y-%m-%d')
-            _LOGGER.debug(" - ")
-            _LOGGER.debug("clientDate: ")
-            _LOGGER.debug(clientDate)
-            _LOGGER.debug(" - ")
-            
+            clientDate = today.strftime('%Y-%m-%d')          
 
             # Login to eSolar API
             url = 'https://fop.saj-electric.com/saj/login'
@@ -549,7 +535,6 @@ class SAJeSolarMeterData(object):
             # Sec module
             if self.sensors == "saj_sec":
 
-                _LOGGER.debug("saj_sec active")
                 # getPlantMeterModuleList
                 url_module = "https://fop.saj-electric.com/saj/cloudmonitor/plantMeterModule/getPlantMeterModuleList"
 
@@ -584,6 +569,8 @@ class SAJeSolarMeterData(object):
                 plantDetails.update(temp_getPlantMeterModuleList)
 
                 moduleSn = plantDetails["getPlantMeterModuleList"]['moduleList'][0]['moduleSn']
+
+                # -Debug- Sec module serial number 
                 _LOGGER.debug(moduleSn)
 
                 # findDevicePageList
@@ -737,7 +724,7 @@ class SAJeSolarMeterData(object):
             return
 
 
-        # Print Cookies and Data
+        # -Debug- Cookies and Data
         _LOGGER.debug(self._session.cookie_jar.filter_cookies("https://fop.saj-electric.com"))
         _LOGGER.debug(self._data)
 
@@ -997,5 +984,5 @@ class SAJeSolarMeterSensor(SensorEntity):
                     if energy["getPlantMeterDetailInfo"]['plantDetail']["totalSellEnergy"] is not None:
                         self._state = (energy["getPlantMeterDetailInfo"]['plantDetail']["totalSellEnergy"])
 
-
+            # -Debug- adding sensor
             _LOGGER.debug("Device: {} State: {}".format(self._type, self._state))
