@@ -4,7 +4,7 @@
 This is a Custom Component for Home-Assistant (https://home-assistant.io) reads and displays sensor values from the SAJ eSolar Portal private API.
 
 NOTE: This component is built upon a none public API and can change/break at any time.
-The component is built with 2 device to test with used in the Netherlands and Malaysia. Please go to the [Supported devides](#**Devices**) part to see if your device is supported
+The component is built with 2 device to test with used in the Netherlands and Malaysia. Please go to the [Supported devides](#devices) part to see if your device is supported
 #
 <br><br>
 
