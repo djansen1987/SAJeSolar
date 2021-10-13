@@ -1,29 +1,34 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/djansen1987/)
 
-## SAJ eSolar Sensor Component
+# **SAJ eSolar Sensor Component**
 This is a Custom Component for Home-Assistant (https://home-assistant.io) reads and displays sensor values from the SAJ eSolar Portal private API.
 
-NOTE: This component is built upon a none private API and can change/break at any time.
-The component is built with 2 device to test with used in the Netherlands
+NOTE: This component is built upon a none public API and can change/break at any time.
+The component is built with 2 device to test with used in the Netherlands and Malaysia. Please go to the [Supported devides](#**Devices**) part to see if your device is supported
+#
+<br><br>
 
-## Installation
+# **Installation**
 
-### HACS - Recommended
+### **HACS - Recommended**
 - Have [HACS](https://hacs.xyz) installed, this will allow you to easily manage and track updates.
 - Search for 'SAJ eSolar'.
 - Click Install below the found integration.
 - Configure using the configuration instructions below.
 - Restart Home-Assistant.
-
-### Manual
+#
+### **Manual**
 - Copy directory `custom_components/saj_esolar` to your `<config dir>/custom_components` directory.
 - Configure with config below.
 - Restart Home-Assistant.
+#
 
-### Note when updating
- - resources are renamed in de configuration, replace old ones. applies when updating v1.0.0.4 -> 1.0.0.5
+##### **Note when updating from v1.0.0.4**
+##### - resources are renamed in de configuration, replace old ones. applies when updating v1.0.0.4 -> 1.0.0.5
+#
+<br><br>
 
-## Usage
+# **Usage**
 To use this component in your installation, add the following to your `configuration.yaml` file:
 
 ```yaml
@@ -89,20 +94,61 @@ Optional sensors when using an Saj Sec Module:
 ```
 
 
-Configuration variables:
+**Configuration variables:**
 
 - **username**   (*Required*): E-mail address used on the eSolar Portal.
 - **password**   (*Required*): Password used on the eSolar Portal, we advise you to save it in your secret.yaml.
 - **resources**  (*Required*): This section tells the component which values to display.
 - **sensors**    (*Optional*): saj_sec # Optional will only work with SAJ Sec Module
-<!-- - **device_id**: (*Optional*): M123456789234567 # Optional will only work with SAJ Sec Module -->
 
-## Screenshot
+#
+<br><br>
+# **Devices**
+
+## **Supported Devices:**
+<br>
+
+### **R5 solar Inverter:**
+
+#####  *R5 -0.7-3K-S1*<br>
+#####  *R5-3~8K-S2*<br>
+#####  *R5-3-20K-T2*<br>
+
+<br>
+
+### **eSolar Modules:**
+
+#####  *eSolar SEC-module*<br>
+#####  *eSolar WiFi- D*<br>
+#####  *eSolar 4G*<br>
+#####  *AOI3*<br>
+
+<br>
+
+
+## **Not Supported Devices:** *(create github discussion to request)*
+<br>
+
+### **Commercial Solar Inverter**
+#####  *Suntrio Plus 25-60K* <br>
+
+<br>
+
+### **Storage Solar Inverter**<br>
+#####  *H1-3~6K-S2* <br>
+#####  *AS1-3KS-5.1* <br>
+#####  *B1-5.1-48* <br>
+
+<br><br>
+#
+# **Screenshot**
 
 ![alt text](https://github.com/djansen1987/SAJeSolar/blob/main/screenshots/Home-Assistant-Sensors-SAJ-eSolar.png?raw=true "All Sensors")
 ![alt text](https://github.com/djansen1987/SAJeSolar/blob/main/screenshots/Home-Assistant-History-SAJ-eSolar.png?raw=true "History Graph")
 
-## Debugging
+<br><br>
+
+# **Debugging**
 
 Add the relevant lines below to the `configuration.yaml`:
 
@@ -112,12 +158,15 @@ logger:
   logs:
     custom_components.saj_esolar: debug
 ```
-## Credits
+<br><br>
 
-Credits to @cyberjunky. I got inspired by his source code which helped me a lot to create my first Custom Component.
+# **Credits**
+
+Credits to @cyberjunky. I got inspired by his source code which helped me a lot to creating this Custom Component.
 https://github.com/cyberjunky/home-assistant-toon_smartmeter/
+<br><br>
 
-## Donation
+# **Donation**
 
 Buy me a coffee: <br />
 [![Buymeacoffee](https://www.buymeacoffee.com/assets/img/bmc-meta-new/new/apple-icon-120x120.png)](https://www.buymeacoffee.com/djansen1987)
