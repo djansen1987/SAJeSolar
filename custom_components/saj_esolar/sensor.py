@@ -407,7 +407,6 @@ class SAJeSolarMeterData(object):
                 'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7',
                 'Cache-Control': 'max-age=0',
                 'Connection': 'keep-alive',
-                'Content-Length': '79',
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Cookie': 'org.springframework.web.servlet.i18n.CookieLocaleResolver.LOCALE=en; op_esolar_lang=en',
                 'DNT': '1',
