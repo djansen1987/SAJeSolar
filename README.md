@@ -108,11 +108,13 @@ Optional sensors when using an Saj Sec Module:
 ## **Supported Devices:**
 <br>
 
-### **R5 solar Inverter:**
+### **solar Inverter:**
 
 #####  *R5 -0.7-3K-S1*<br>
 #####  *R5-3~8K-S2*<br>
 #####  *R5-3-20K-T2*<br>
+#####  *Sununo plus 4K-M-RD*<br>
+
 
 <br>
 
@@ -124,7 +126,6 @@ Optional sensors when using an Saj Sec Module:
 #####  *AOI3*<br>
 
 <br>
-
 
 ## **Not Supported Devices:** *(create github discussion to request)*
 <br>
