@@ -59,14 +59,8 @@ sensor:
       - peakPower
 ```
 
-If you have a Saj Sec module add the following config under platform:
+<br>
 
-```yaml
-    sensors: saj_sec # Optional will only work with SAJ Sec Module
-```  
-
-<!-- The device_id can be found on the SAJ portal under "Load Monitorring" (Currently have not found a api the outputs the serial numbers, there for it need to be added manualy)
-![alt text](https://github.com/djansen1987/SAJeSolar/blob/main/screenshots/SAJ-Portal-Sec-Module-Serial-Number.png?raw=true "Sec Serial Number") -->
 H1 Sensors:
 
 ```yaml
@@ -120,7 +114,7 @@ H1 Sensors:
       - selfConsumedEnergy1
       - selfConsumedEnergy2
 ```
-
+<br>
 
 Saj Sec Module:
 
