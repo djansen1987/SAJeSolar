@@ -44,7 +44,7 @@ sensor:
       - todayElectricity
       - monthElectricity
       - yearElectricity
-      - totalElectricity
+      - totalElectricity # Energy -> Solar production
       - todayGridIncome
       - income
       - lastUploadTime
@@ -67,11 +67,85 @@ If you have a Saj Sec module add the following config under platform:
 
 <!-- The device_id can be found on the SAJ portal under "Load Monitorring" (Currently have not found a api the outputs the serial numbers, there for it need to be added manualy)
 ![alt text](https://github.com/djansen1987/SAJeSolar/blob/main/screenshots/SAJ-Portal-Sec-Module-Serial-Number.png?raw=true "Sec Serial Number") -->
-
-
-Optional sensors when using an Saj Sec Module:
+H1 Sensors:
 
 ```yaml
+    sensors: h1
+    resources:
+      - nowPower
+      - runningState
+      - todayElectricity
+      - monthElectricity
+      - yearElectricity
+      - totalElectricity # Energy -> Solar production
+      - todayGridIncome
+      - income
+      - lastUploadTime
+      - totalPlantTreeNum
+      - totalReduceCo2
+      - todayAlarmNum
+      - status
+      - plantuid
+      - currency
+      - address
+      - isOnline
+      - peakPower
+
+      - devOnlineNum
+      - selfUseRate
+      - totalBuyElec # Energy -> Grid consumption
+      - totalConsumpElec
+      - totalSellElec # Energy -> Return to grid
+      - batCapcity
+      - batCurr
+      - batEnergyPercent
+      - batteryDirection
+      - batteryPower
+      - gridDirection
+      - gridPower
+      - h1Online
+      - outPower
+      - outPutDirection
+      - pvDirection
+      - pvPower
+      - solarPower
+      - pvElec
+      - useElec
+      - buyElec
+      - sellElec
+      - buyRate
+      - sellRate
+      - selfConsumedRate1
+      - selfConsumedRate2
+      - selfConsumedEnergy1
+      - selfConsumedEnergy2
+```
+
+
+Saj Sec Module:
+
+```yaml
+    sensors: saj_sec # Optional will only work with SAJ Sec Module
+    resources:
+      - nowPower
+      - runningState
+      - todayElectricity
+      - monthElectricity
+      - yearElectricity
+      - totalElectricity # Energy -> Solar production
+      - todayGridIncome
+      - income
+      - lastUploadTime
+      - totalPlantTreeNum
+      - totalReduceCo2
+      - todayAlarmNum
+      - status
+      - plantuid
+      - currency
+      - address
+      - isOnline
+      - peakPower
+
       - pvElec
       - useElec
       - buyElec
@@ -88,9 +162,9 @@ Optional sensors when using an Saj Sec Module:
       - totalLoadPower
       - totalPvgenPower
       - totalPvEnergy
-      - totalLoadEnergy
+      - totalLoadEnergy # Energy -> Grid consumption
       - totalBuyEnergy
-      - totalSellEnergy
+      - totalSellEnergy # Energy -> Return to grid
 ```
 
 
@@ -99,7 +173,7 @@ Optional sensors when using an Saj Sec Module:
 - **username**   (*Required*): E-mail address used on the eSolar Portal.
 - **password**   (*Required*): Password used on the eSolar Portal, we advise you to save it in your secret.yaml.
 - **resources**  (*Required*): This section tells the component which values to display.
-- **sensors**    (*Optional*): saj_sec # Optional will only work with SAJ Sec Module
+- **sensors**    (*Optional*): saj_sec / h1 # Optional will only work with SAJ Sec Module
 
 #
 <br><br>
@@ -127,6 +201,11 @@ Optional sensors when using an Saj Sec Module:
 
 <br>
 
+### **Storage Solar Inverter**<br>
+#####  *H1-3~6K-S2* <br>
+
+<br>
+
 ## **Not Supported Devices:** *(create github discussion to request)*
 <br>
 
@@ -136,9 +215,8 @@ Optional sensors when using an Saj Sec Module:
 <br>
 
 ### **Storage Solar Inverter**<br>
-#####  *H1-3~6K-S2* <br>
-#####  *AS1-3KS-5.1* <br>
-#####  *B1-5.1-48* <br>
+#####  *AS1-3KS-5.1* (not tested) <br>
+#####  *B1-5.1-48* (not tested) <br>
 
 <br><br>
 #

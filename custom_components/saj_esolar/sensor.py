@@ -53,8 +53,6 @@ def add_years(d, years):
     except ValueError:
         return d + (date(d.year + years, 1, 1) - date(d.year, 1, 1))
 
-#currentdate = datetime.date.today().strftime('%Y-%m-%d')
-
 BASE_URL = 'https://fop.saj-electric.com/saj/login'
 _LOGGER = logging.getLogger(__name__)
 
@@ -67,6 +65,7 @@ ATTR_SECTION = "section"
 SENSOR_LIST = {
     "nowPower",
     "runningState",
+    "devOnlineNum",
     "todayElectricity",
     "monthElectricity",
     "yearElectricity",
@@ -84,12 +83,17 @@ SENSOR_LIST = {
     "isOnline",
     "status",
     "peakPower",
+    #sec & h1
     "pvElec",
     "useElec",
     "buyElec",
     "sellElec",
     "buyRate",
     "sellRate",
+    "selfUseRate",
+    "totalBuyElec",
+    "totalConsumpElec",
+    "totalSellElec",
     "selfConsumedRate1",
     "selfConsumedRate2",
     "selfConsumedEnergy1",
@@ -103,6 +107,20 @@ SENSOR_LIST = {
     "totalLoadEnergy",
     "totalBuyEnergy",
     "totalSellEnergy",
+    #h1
+    "batCapcity",
+    "batCurr",
+    "batEnergyPercent",
+    "batteryDirection",
+    "batteryPower",
+    "gridDirection",
+    "gridPower",
+    "h1Online",
+    "outPower",
+    "outPutDirection",
+    "pvDirection",
+    "pvPower",
+    "solarPower",
 }
 
 SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
@@ -118,6 +136,11 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         name="runningState",
         icon="mdi:solar-panel",
     ),
+    SensorEntityDescription(
+        key="devOnlineNum",
+        name="devOnlineNum",
+        icon="mdi:solar-panel",
+    ),    
     SensorEntityDescription(
         key="todayElectricity",
         name="todayElectricity",
@@ -143,6 +166,32 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         key="totalElectricity",
         name="totalElectricity",
         icon="mdi:solar-panel-large",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+    ),
+    SensorEntityDescription(
+        key="selfUseRate",
+        name="selfUseRate",
+        icon="mdi:solar-panel",
+    ),
+    SensorEntityDescription(
+        key="totalBuyElec",
+        name="totalBuyElec",
+        icon="mdi:solar-panel",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+    ),
+    SensorEntityDescription(
+        key="totalConsumpElec",
+        name="totalConsumpElec",
+        icon="mdi:solar-panel",
+    ),
+    SensorEntityDescription(
+        key="totalSellElec",
+        name="totalSellElec",
+        icon="mdi:solar-panel",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
@@ -340,6 +389,57 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
     ),
+    #h1
+    SensorEntityDescription(
+        key="batCapcity",
+        name="batCapcity",
+        icon="mdi:solar-panel-large",
+    ),
+    SensorEntityDescription(
+        key="batCurr",
+        name="batCurr",
+        icon="mdi:solar-panel-large",
+    ),
+    SensorEntityDescription(
+        key="batEnergyPercent",
+        name="batEnergyPercent",
+        icon="mdi:solar-panel-large",
+    ),
+    SensorEntityDescription(
+        key="batteryDirection",
+        name="batteryDirection",
+        icon="mdi:solar-panel-large",
+    ),
+    SensorEntityDescription(
+        key="gridPower",
+        name="gridPower",
+        icon="mdi:solar-panel-large",
+    ),
+    SensorEntityDescription(
+        key="h1Online",
+        name="h1Online",
+        icon="mdi:solar-panel-large",
+    ),
+    SensorEntityDescription(
+        key="outPower",
+        name="outPower",
+        icon="mdi:solar-panel-large",
+    ),
+    SensorEntityDescription(
+        key="outPutDirection",
+        name="outPutDirection",
+        icon="mdi:solar-panel-large",
+    ),
+    SensorEntityDescription(
+        key="pvPower",
+        name="pvPower",
+        icon="mdi:solar-panel-large",
+    ),
+    SensorEntityDescription(
+        key="solarPower",
+        name="solarPower",
+        icon="mdi:solar-panel-large",
+    ),
 )
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
@@ -365,7 +465,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     entities = []
     for description in SENSOR_TYPES:
         if description.key in config[CONF_RESOURCES]:
-            sensor = SAJeSolarMeterSensor(description, data)
+            sensor = SAJeSolarMeterSensor(description, data, config.get(CONF_SENSORS))
             entities.append(sensor)
     async_add_entities(entities, True)
     return True
@@ -401,13 +501,12 @@ class SAJeSolarMeterData(object):
                 'password': self.password,
                 'rememberMe': 'true'
             }
-            headers = {
+            headers_login = {
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
                 'Accept-Encoding': 'gzip, deflate, br',
                 'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7',
                 'Cache-Control': 'max-age=0',
                 'Connection': 'keep-alive',
-                'Content-Length': '79',
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Cookie': 'org.springframework.web.servlet.i18n.CookieLocaleResolver.LOCALE=en; op_esolar_lang=en',
                 'DNT': '1',
@@ -424,7 +523,7 @@ class SAJeSolarMeterData(object):
                 'User-Agent'
                 : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36'
             }
-            response = await self._session.post(url, headers=headers, data=payload)
+            response = await self._session.post(url, headers=headers_login, data=payload)
 
             if response.status != 200:
                 _LOGGER.error(f"{response.url} returned {response.status}")
@@ -433,38 +532,7 @@ class SAJeSolarMeterData(object):
 
             # Get API Plant info from Esolar Portal
             url2 = 'https://fop.saj-electric.com/saj/monitor/site/getUserPlantList'
-            headers2 = {
-                'Connection': 'keep-alive',
-                'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
-                'Accept': 'application/json, text/javascript, */*; q=0.01',
-                'DNT': '1',
-                'X-Requested-With': 'XMLHttpRequest',
-                'sec-ch-ua-mobile': '?0',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                'Origin': 'https://fop.saj-electric.com',
-                'Sec-Fetch-Site': 'same-origin',
-                'Sec-Fetch-Mode': 'cors',
-                'Sec-Fetch-Dest': 'empty',
-                'Referer': 'https://fop.saj-electric.com/saj/monitor/site/list',
-                'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
-            }
-
-            payload2= "pageNo=&pageSize=&orderByIndex=&officeId=&clientDate={}&runningState=&selectInputType=1&plantName=&deviceSn=&type=&countryCode=&isRename=&isTimeError=&systemPowerLeast=&systemPowerMost=".format(clientDate)
-            response2 = await self._session.post(url2, headers=headers2, data=payload2)
-
-            if response2.status != 200:
-                _LOGGER.error(f"{response2.url} returned {response2.status}")
-                return
-
-            plantInfo = await response2.json()
-            plantuid = plantInfo['plantList'][0]['plantuid']
-
-            
-            # Get API Plant Solar Details
-            url3 = "https://fop.saj-electric.com/saj/monitor/site/getPlantDetailInfo"   
-            payload3="plantuid={}&clientDate={}".format(plantuid,clientDate)
-            headers3 = {
+            headers = {
                 'Connection': 'keep-alive',
                 'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
                 'Accept': 'application/json, text/javascript, */*; q=0.01',
@@ -480,7 +548,23 @@ class SAJeSolarMeterData(object):
                 'Referer': 'https://fop.saj-electric.com/saj/monitor/home/index',
                 'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
             }
-            response3 = await self._session.post(url3, headers=headers3, data=payload3)
+
+            payload2= "pageNo=&pageSize=&orderByIndex=&officeId=&clientDate={}&runningState=&selectInputType=1&plantName=&deviceSn=&type=&countryCode=&isRename=&isTimeError=&systemPowerLeast=&systemPowerMost=".format(clientDate)
+            response2 = await self._session.post(url2, headers=headers, data=payload2)
+
+            if response2.status != 200:
+                _LOGGER.error(f"{response2.url} returned {response2.status}")
+                return
+
+            plantInfo = await response2.json()
+            plantuid = plantInfo['plantList'][0]['plantuid']
+
+            
+            # Get API Plant Solar Details
+            url3 = "https://fop.saj-electric.com/saj/monitor/site/getPlantDetailInfo"   
+            payload3="plantuid={}&clientDate={}".format(plantuid,clientDate)
+
+            response3 = await self._session.post(url3, headers=headers, data=payload3)
 
             if response3.status != 200:
                 _LOGGER.error(f"{response3.url} returned {response3.status}")
@@ -505,23 +589,9 @@ class SAJeSolarMeterData(object):
             epochmilliseconds = round(int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds() * 1000))            
                             
             url4 = "https://fop.saj-electric.com/saj/monitor/site/getPlantDetailChart2?plantuid={}&chartDateType=1&energyType=0&clientDate={}&deviceSnArr={}&chartCountType=2&previousChartDay={}&nextChartDay={}&chartDay={}&previousChartMonth={}&nextChartMonth={}&chartMonth={}&previousChartYear={}&nextChartYear={}&chartYear={}&elecDevicesn=&_={}".format(plantuid,clientDate,deviceSnArr,previousChartDay,nextChartDay,chartDay,previousChartMonth,nextChartMonth,chartMonth,previousChartYear,nextChartYear,chartYear,epochmilliseconds)
-            headers4 = {
-                'Connection': 'keep-alive',
-                'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
-                'Accept': 'application/json, text/javascript, */*; q=0.01',
-                'DNT': '1',
-                'X-Requested-With': 'XMLHttpRequest',
-                'sec-ch-ua-mobile': '?0',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
-                'Sec-Fetch-Site': 'same-origin',
-                'Sec-Fetch-Mode': 'cors',
-                'Sec-Fetch-Dest': 'empty',
-                'Referer': 'https://fop.saj-electric.com/saj/monitor/home/index',
-                'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
-            }
 
-            response4 = await self._session.post(url4, headers=headers4)
+
+            response4 = await self._session.post(url4, headers=headers)
 
             if response4.status != 200:
                 _LOGGER.error(f"{response4.url} returned {response4.status}")
@@ -531,6 +601,28 @@ class SAJeSolarMeterData(object):
             plantDetails.update(plantcharts)
 
 
+            # H1 Module
+            if self.sensors == "h1":
+                # getStoreOrAcDevicePowerInfo
+                url_getStoreOrAcDevicePowerInfo = "https://fop.saj-electric.com/saj/monitor/site/getStoreOrAcDevicePowerInfo?plantuid=&devicesn={}&_={}".format(deviceSnArr,epochmilliseconds)
+
+                response_getStoreOrAcDevicePowerInfo = await self._session.post(url_getStoreOrAcDevicePowerInfo, headers=headers)
+
+                if response_getStoreOrAcDevicePowerInfo.status != 200:
+                    _LOGGER.error(f"{response_getStoreOrAcDevicePowerInfo.url} returned {response_getStoreOrAcDevicePowerInfo.status}")
+                    return
+
+                result_getStoreOrAcDevicePowerInfo = await response_getStoreOrAcDevicePowerInfo.json()
+                plantDetails.update(result_getStoreOrAcDevicePowerInfo)
+                _LOGGER.debug(result_getStoreOrAcDevicePowerInfo)
+
+            elif self.sensors == "None":
+                self._data = plantDetails
+            else:
+                # Data = plantdetails
+                self._data = plantDetails
+            
+
 
             # Sec module
             if self.sensors == "saj_sec":
@@ -539,23 +631,8 @@ class SAJeSolarMeterData(object):
                 url_module = "https://fop.saj-electric.com/saj/cloudmonitor/plantMeterModule/getPlantMeterModuleList"
 
                 payload_module = "pageNo=&pageSize=&plantUid={}".format(plantuid)
-                headers_module = {
-                    'Connection': 'keep-alive',
-                    'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
-                    'Accept': 'application/json, text/javascript, */*; q=0.01',
-                    'DNT': '1',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'sec-ch-ua-mobile': '?0',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
-                    'Sec-Fetch-Site': 'same-origin',
-                    'Sec-Fetch-Mode': 'cors',
-                    'Sec-Fetch-Dest': 'empty',
-                    'Referer': 'https://fop.saj-electric.com/saj/monitor/home/index',
-                    'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
-                }                  
-                
-                response_module = await self._session.post(url_module, headers=headers_module, data=payload_module)
+
+                response_module = await self._session.post(url_module, headers=headers, data=payload_module)
             
                 if response_module.status != 200:
                     _LOGGER.error(f"{response_module.url} returned {response_module.status}")
@@ -573,27 +650,13 @@ class SAJeSolarMeterData(object):
                 # -Debug- Sec module serial number 
                 _LOGGER.debug(moduleSn)
 
+
                 # findDevicePageList
                 url_findDevicePageList = "https://fop.saj-electric.com/saj/cloudMonitor/device/findDevicePageList"
 
                 payload_findDevicePageList = "officeId=1&pageNo=&pageSize=&orderName=1&orderType=2&plantuid={}&deviceStatus=&localDate={}&localMonth={}".format(plantuid,chartMonth,chartMonth)
-                headers_findDevicePageList = {
-                    'Connection': 'keep-alive',
-                    'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
-                    'Accept': 'application/json, text/javascript, */*; q=0.01',
-                    'DNT': '1',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'sec-ch-ua-mobile': '?0',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
-                    'Sec-Fetch-Site': 'same-origin',
-                    'Sec-Fetch-Mode': 'cors',
-                    'Sec-Fetch-Dest': 'empty',
-                    'Referer': 'https://fop.saj-electric.com/saj/monitor/home/index',
-                    'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
-                }
 
-                response_findDevicePageList = await self._session.post(url_findDevicePageList, headers=headers_findDevicePageList, data=payload_findDevicePageList)
+                response_findDevicePageList = await self._session.post(url_findDevicePageList, headers=headers, data=payload_findDevicePageList)
 
                 if response_findDevicePageList.status != 200:
                     _LOGGER.error(f"{response_findDevicePageList.url} returned {response_findDevicePageList.status}")
@@ -610,23 +673,8 @@ class SAJeSolarMeterData(object):
                 url_getPlantMeterDetailInfo = "https://fop.saj-electric.com/saj/monitor/site/getPlantMeterDetailInfo"
 
                 payload_getPlantMeterDetailInfo = "plantuid={}&clientDate={}".format(plantuid,clientDate)
-                headers_getPlantMeterDetailInfo = {
-                    'Connection': 'keep-alive',
-                    'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
-                    'Accept': 'application/json, text/javascript, */*; q=0.01',
-                    'DNT': '1',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'sec-ch-ua-mobile': '?0',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
-                    'Sec-Fetch-Site': 'same-origin',
-                    'Sec-Fetch-Mode': 'cors',
-                    'Sec-Fetch-Dest': 'empty',
-                    'Referer': 'https://fop.saj-electric.com/saj/monitor/site/meterMonitor?plantUid={}&ifIndex=Y'.format(plantuid),
-                    'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
-                }
 
-                response_getPlantMeterDetailInfo = await self._session.post(url_getPlantMeterDetailInfo, headers=headers_getPlantMeterDetailInfo, data=payload_getPlantMeterDetailInfo)
+                response_getPlantMeterDetailInfo = await self._session.post(url_getPlantMeterDetailInfo, headers=headers, data=payload_getPlantMeterDetailInfo)
 
                 if response_getPlantMeterDetailInfo.status != 200:
                     _LOGGER.error(f"{response_getPlantMeterDetailInfo.url} returned {response_getPlantMeterDetailInfo.status}")
@@ -642,23 +690,7 @@ class SAJeSolarMeterData(object):
                 # getPlantMeterEnergyPreviewInfo
                 url_getPlantMeterEnergyPreviewInfo = "https://fop.saj-electric.com/saj/monitor/site/getPlantMeterEnergyPreviewInfo?plantuid={}&moduleSn={}&_={}".format(plantuid,moduleSn,epochmilliseconds)
 
-                headers_getPlantMeterEnergyPreviewInfo = {
-                    'Connection': 'keep-alive',
-                    'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
-                    'Accept': 'application/json, text/javascript, */*; q=0.01',
-                    'DNT': '1',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'sec-ch-ua-mobile': '?0',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
-                    'Sec-Fetch-Site': 'same-origin',
-                    'Sec-Fetch-Mode': 'cors',
-                    'Sec-Fetch-Dest': 'empty',
-                    'Referer': 'https://fop.saj-electric.com/saj/monitor/site/meterMonitor?plantUid={}&ifIndex=Y'.format(plantuid),
-                    'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
-                }
-
-                response_getPlantMeterEnergyPreviewInfo = await self._session.get(url_getPlantMeterEnergyPreviewInfo, headers=headers_getPlantMeterEnergyPreviewInfo)
+                response_getPlantMeterEnergyPreviewInfo = await self._session.get(url_getPlantMeterEnergyPreviewInfo, headers=headers)
 
                 if response_getPlantMeterEnergyPreviewInfo.status != 200:
                     _LOGGER.error(f"{response_getPlantMeterEnergyPreviewInfo.url} returned {response_getPlantMeterEnergyPreviewInfo.status}")
@@ -674,23 +706,7 @@ class SAJeSolarMeterData(object):
                 # Get Sec Meter details
                 url_getPlantMeterChartData = "https://fop.saj-electric.com/saj/monitor/site/getPlantMeterChartData?plantuid={}&chartDateType=1&energyType=0&clientDate={}&deviceSnArr=&chartCountType=2&previousChartDay={}&nextChartDay={}&chartDay={}&previousChartMonth={}&nextChartMonth={}&chartMonth={}&previousChartYear={}&nextChartYear={}&chartYear={}&moduleSn={}&_={}".format(plantuid,clientDate,previousChartDay,nextChartDay,chartDay,previousChartMonth,nextChartMonth,chartMonth,previousChartYear,nextChartYear,chartYear,moduleSn,epochmilliseconds)
 
-                headers_getPlantMeterChartData = {
-                    'Connection': 'keep-alive',
-                    'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
-                    'Accept': 'application/json, text/javascript, */*; q=0.01',
-                    'DNT': '1',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'sec-ch-ua-mobile': '?0',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
-                    'Sec-Fetch-Site': 'same-origin',
-                    'Sec-Fetch-Mode': 'cors',
-                    'Sec-Fetch-Dest': 'empty',
-                    'Referer': 'https://fop.saj-electric.com/saj/monitor/home/index',
-                    'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
-                }
-
-                response_getPlantMeterChartData = await self._session.post(url_getPlantMeterChartData, headers=headers_getPlantMeterChartData)
+                response_getPlantMeterChartData = await self._session.post(url_getPlantMeterChartData, headers=headers)
 
                 if response_getPlantMeterChartData.status != 200:
                     _LOGGER.error(f"{response_getPlantMeterChartData.url} returned {response_getPlantMeterChartData.status}")
@@ -731,22 +747,7 @@ class SAJeSolarMeterData(object):
 
         # logout session
         url_logout = "https://fop.saj-electric.com/saj/logout"
-        headers_logoff = {
-            'Connection': 'keep-alive',
-            'sec-ch-ua': '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
-            'sec-ch-ua-mobile': '?0',
-            'Upgrade-Insecure-Requests': '1',
-            'DNT': '1',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-            'Sec-Fetch-Site': 'same-origin',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-User': '?1',
-            'Sec-Fetch-Dest': 'document',
-            'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
-        }
-
-        response_logout = await self._session.post(url_logout, headers=headers_logoff)
+        response_logout = await self._session.post(url_logout, headers=headers)
     
         if response_logout.status != 200:
             _LOGGER.error(f"{response_logout.url} returned {response_logout.status}")
@@ -769,13 +770,13 @@ class SAJeSolarMeterData(object):
 class SAJeSolarMeterSensor(SensorEntity):
     """Collecting data and return sensor entity."""
 
-    def __init__(self, description: SensorEntityDescription, data):
+    def __init__(self, description: SensorEntityDescription, data, sensors):
         """Initialize the sensor."""
         self.entity_description = description
         self._data = data
 
         self._state = None
-
+        self.sensors = sensors
         self._type = self.entity_description.key
         self._attr_icon = self.entity_description.icon
         self._attr_name = SENSOR_PREFIX + self.entity_description.name
@@ -799,7 +800,10 @@ class SAJeSolarMeterSensor(SensorEntity):
         energy = self._data.latest_data
 
         if energy:
-
+            if self._type == 'devOnlineNum':
+                if 'devOnlineNum' in energy['plantDetail']:
+                    if energy['plantDetail']["devOnlineNum"] is not None:
+                        self._state = int(energy['plantDetail']["devOnlineNum"])
             if self._type == 'nowPower':
                 if 'nowPower' in energy['plantDetail']:
                     if energy['plantDetail']["nowPower"] is not None:
@@ -832,6 +836,25 @@ class SAJeSolarMeterSensor(SensorEntity):
                 if 'income' in energy['plantDetail']:
                     if energy['plantDetail']["income"] is not None:
                         self._state = float(energy['plantDetail']["income"])
+            if self._type == 'selfUseRate':
+                if 'selfUseRate' in energy['plantDetail']:
+                    if energy['plantDetail']["selfUseRate"] is not None:
+                        self._state = energy['plantDetail']["selfUseRate"]
+            if self._type == 'totalBuyElec':
+                if 'totalBuyElec' in energy['plantDetail']:
+                    if energy['plantDetail']["totalBuyElec"] is not None:
+                        self._state = float(energy['plantDetail']["totalBuyElec"])
+            if self._type == 'totalConsumpElec':
+                if 'totalConsumpElec' in energy['plantDetail']:
+                    if energy['plantDetail']["totalConsumpElec"] is not None:
+                        self._state = float(energy['plantDetail']["totalConsumpElec"])
+            if self._type == 'totalSellElec':
+                if 'totalSellElec' in energy['plantDetail']:
+                    if energy['plantDetail']["totalSellElec"] is not None:
+                        self._state = float(energy['plantDetail']["totalSellElec"])
+
+
+
 
 
             if self._type == 'todayAlarmNum':
@@ -895,94 +918,190 @@ class SAJeSolarMeterSensor(SensorEntity):
                     if energy["status"] is not None:
                         self._state = (energy["status"])
 
+            ########################################################################## SAJ h1
+            if self.sensors == "h1":
+                if self._type == 'buyElec':
+                    if 'pvElec' in energy['viewBean']:
+                        if energy['viewBean']["buyElec"] is not None:
+                            self._state = float(energy['viewBean']["buyElec"])
+                if self._type == 'buyRate':
+                    if 'buyRate' in energy['viewBean']:
+                        if energy['viewBean']["buyRate"] is not None:
+                            self._state = energy['viewBean']["buyRate"]
+                if self._type == 'pvElec':
+                    if 'pvElec' in energy['viewBean']:
+                        if energy['viewBean']["pvElec"] is not None:
+                            self._state = float(energy['viewBean']["pvElec"])
+                if self._type == 'selfConsumedEnergy1':
+                    if 'selfConsumedEnergy1' in energy['viewBean']:
+                        if energy['viewBean']["selfConsumedEnergy1"] is not None:
+                            self._state = float(energy['viewBean']["selfConsumedEnergy1"])
+                if self._type == 'selfConsumedEnergy2':
+                    if 'selfConsumedEnergy2' in energy['viewBean']:
+                        if energy['viewBean']["selfConsumedEnergy2"] is not None:
+                            self._state = float(energy['viewBean']["selfConsumedEnergy2"])
+                if self._type == 'selfConsumedRate1':
+                    if 'selfConsumedRate1' in energy['viewBean']:
+                        if energy['viewBean']["selfConsumedRate1"] is not None:
+                            self._state = energy['viewBean']["selfConsumedRate1"]
+                if self._type == 'selfConsumedRate2':
+                    if 'selfConsumedRate2' in energy['viewBean']:
+                        if energy['viewBean']["selfConsumedRate2"] is not None:
+                            self._state = energy['viewBean']["selfConsumedRate2"]
+                if self._type == 'sellElec':
+                    if 'sellElec' in energy['viewBean']:
+                        if energy['viewBean']["sellElec"] is not None:
+                            self._state = float(energy['viewBean']["sellElec"])
+                if self._type == 'sellRate':
+                    if 'sellRate' in energy['viewBean']:
+                        if energy['viewBean']["sellRate"] is not None:
+                            self._state = energy['viewBean']["sellRate"]
+                if self._type == 'useElec':
+                    if 'useElec' in energy['viewBean']:
+                        if energy['viewBean']["useElec"] is not None:
+                            self._state = float(energy['viewBean']["useElec"])
+            # storeDevicePower
+                if self._type == 'batCapcity':
+                    if 'batCapcity' in energy["storeDevicePower"]:
+                        if energy["storeDevicePower"]['batCapcity'] is not None:
+                            self._state = float(energy["storeDevicePower"]["batCapcity"])
+                if self._type == 'batCurr':
+                    if 'batCurr' in energy["storeDevicePower"]:
+                        if energy["storeDevicePower"]['batCurr'] is not None:
+                            self._state = float(energy["storeDevicePower"]["batCurr"])
+                if self._type == 'batEnergyPercent':
+                    if 'batEnergyPercent' in energy["storeDevicePower"]:
+                        if energy["storeDevicePower"]['batEnergyPercent'] is not None:
+                            self._state = float(energy["storeDevicePower"]["batEnergyPercent"])
+                if self._type == 'batteryDirection':
+                    if 'batteryDirection' in energy["storeDevicePower"]:
+                        if energy["storeDevicePower"]['batteryDirection'] is not None:
+                            self._state = int(energy["storeDevicePower"]["batteryDirection"])
+                if self._type == 'batteryPower':
+                    if 'batteryPower' in energy["storeDevicePower"]:
+                        if energy["storeDevicePower"]['batteryPower'] is not None:
+                            self._state = float(energy["storeDevicePower"]["batteryPower"])
+                if self._type == 'gridDirection':
+                    if 'gridDirection' in energy["storeDevicePower"]:
+                        if energy["storeDevicePower"]['gridDirection'] is not None:
+                            self._state = float(energy["storeDevicePower"]["gridDirection"])
+                if self._type == 'gridPower':
+                    if 'gridPower' in energy["storeDevicePower"]:
+                        if energy["storeDevicePower"]['gridPower'] is not None:
+                            self._state = float(energy["storeDevicePower"]["gridPower"])
+                if self._type == 'h1Online':
+                    if 'isOnline' in energy["storeDevicePower"]:
+                        if energy["storeDevicePower"]['isOnline'] is not None:
+                            self._state = int(energy["storeDevicePower"]["isOnline"])
+                if self._type == 'outPower':
+                    if 'outPower' in energy["storeDevicePower"]:
+                        if energy["storeDevicePower"]['outPower'] is not None:
+                            self._state = float(energy["storeDevicePower"]["outPower"])
+                if self._type == 'outPutDirection':
+                    if 'outPutDirection' in energy["storeDevicePower"]:
+                        if energy["storeDevicePower"]['outPutDirection'] is not None:
+                            self._state = float(energy["storeDevicePower"]["outPutDirection"])
+                if self._type == 'pvDirection':
+                    if 'pvDirection' in energy["storeDevicePower"]:
+                        if energy["storeDevicePower"]['pvDirection'] is not None:
+                            self._state = int(energy["storeDevicePower"]["pvDirection"])
+                if self._type == 'pvPower':
+                    if 'pvPower' in energy["storeDevicePower"]:
+                        if energy["storeDevicePower"]['pvPower'] is not None:
+                            self._state = float(energy["storeDevicePower"]["pvPower"])
+                if self._type == 'solarPower':
+                    if 'solarPower' in energy["storeDevicePower"]:
+                        if energy["storeDevicePower"]['solarPower'] is not None:
+                            self._state = float(energy["storeDevicePower"]["solarPower"])
 
-            # Sec module Sensors:
-
-            # getPlantMeterChartData - viewBeam
-            if self._type == 'pvElec':
-                if 'pvElec' in energy["getPlantMeterChartData"]['viewBean']:
-                    if energy["getPlantMeterChartData"]['viewBean']["pvElec"] is not None:
-                        self._state = float(energy["getPlantMeterChartData"]['viewBean']["pvElec"])
-            if self._type == 'useElec':
-                if 'useElec' in energy["getPlantMeterChartData"]['viewBean']:
-                    if energy["getPlantMeterChartData"]['viewBean']["useElec"] is not None:
-                        self._state = float(energy["getPlantMeterChartData"]['viewBean']["useElec"])
-            if self._type == 'buyElec':
-                if 'buyElec' in energy["getPlantMeterChartData"]['viewBean']:
-                    if energy["getPlantMeterChartData"]['viewBean']["buyElec"] is not None:
-                        self._state = float(energy["getPlantMeterChartData"]['viewBean']["buyElec"])
-            if self._type == 'sellElec':
-                if 'sellElec' in energy["getPlantMeterChartData"]['viewBean']:
-                    if energy["getPlantMeterChartData"]['viewBean']["sellElec"] is not None:
-                        self._state = float(energy["getPlantMeterChartData"]['viewBean']["sellElec"])
-            if self._type == 'selfConsumedEnergy1':
-                if 'selfConsumedEnergy1' in energy["getPlantMeterChartData"]['viewBean']:
-                    if energy["getPlantMeterChartData"]['viewBean']["selfConsumedEnergy1"] is not None:
-                        self._state = float(energy["getPlantMeterChartData"]['viewBean']["selfConsumedEnergy1"])
-            if self._type == 'selfConsumedEnergy2':
-                if 'selfConsumedEnergy2' in energy["getPlantMeterChartData"]['viewBean']:
-                    if energy["getPlantMeterChartData"]['viewBean']["selfConsumedEnergy2"] is not None:
-                        self._state = float(energy["getPlantMeterChartData"]['viewBean']["selfConsumedEnergy2"])
-            if self._type == 'reduceCo2':
-                if 'reduceCo2' in energy["getPlantMeterChartData"]['viewBean']:
-                    if energy["getPlantMeterChartData"]['viewBean']["reduceCo2"] is not None:
-                        self._state = float(energy["getPlantMeterChartData"]['viewBean']["reduceCo2"])
-
-
-            if self._type == 'buyRate':
-                if 'buyRate' in energy["getPlantMeterChartData"]['viewBean']:
-                    if energy["getPlantMeterChartData"]['viewBean']["buyRate"] is not None:
-                        self._state = (energy["getPlantMeterChartData"]['viewBean']["buyRate"])
-            if self._type == 'sellRate':
-                if 'sellRate' in energy["getPlantMeterChartData"]['viewBean']:
-                    if energy["getPlantMeterChartData"]['viewBean']["sellRate"] is not None:
-                        self._state = (energy["getPlantMeterChartData"]['viewBean']["sellRate"])
-            if self._type == 'selfConsumedRate1':
-                if 'selfConsumedRate1' in energy["getPlantMeterChartData"]['viewBean']:
-                    if energy["getPlantMeterChartData"]['viewBean']["selfConsumedRate1"] is not None:
-                        self._state = (energy["getPlantMeterChartData"]['viewBean']["selfConsumedRate1"])
-            if self._type == 'selfConsumedRate2':
-                if 'selfConsumedRate2' in energy["getPlantMeterChartData"]['viewBean']:
-                    if energy["getPlantMeterChartData"]['viewBean']["selfConsumedRate2"] is not None:
-                        self._state = (energy["getPlantMeterChartData"]['viewBean']["selfConsumedRate2"])
-            if self._type == 'plantTreeNum':
-                if 'plantTreeNum' in energy["getPlantMeterChartData"]['viewBean']:
-                    if energy["getPlantMeterChartData"]['viewBean']["plantTreeNum"] is not None:
-                        self._state = (energy["getPlantMeterChartData"]['viewBean']["plantTreeNum"])
-                                               
-
-            # dataCountList
-            if self._type == 'totalGridPower':
-                if 'dataCountList' in energy:
-                    if energy["getPlantMeterChartData"]['dataCountList'][4][-1] is not None:
-                        self._state = float(energy["getPlantMeterChartData"]['dataCountList'][3][-1])
-            if self._type == 'totalLoadPower':
-                if 'dataCountList' in energy:
-                    if energy["getPlantMeterChartData"]['dataCountList'][4][-1] is not None:
-                        self._state = float(energy["getPlantMeterChartData"]['dataCountList'][2][-1])
-            if self._type == 'totalPvgenPower':
-                if 'dataCountList' in energy:
-                    if energy["getPlantMeterChartData"]['dataCountList'][4][-1] is not None:
-                        self._state = float(energy["getPlantMeterChartData"]['dataCountList'][4][-1])
+            ########################################################################## Sec module Sensors:
+            if self.sensors == "saj_sec":
+                # getPlantMeterChartData - viewBeam
+                if self._type == 'pvElec':
+                    if 'pvElec' in energy["getPlantMeterChartData"]['viewBean']:
+                        if energy["getPlantMeterChartData"]['viewBean']["pvElec"] is not None:
+                            self._state = float(energy["getPlantMeterChartData"]['viewBean']["pvElec"])
+                if self._type == 'useElec':
+                    if 'useElec' in energy["getPlantMeterChartData"]['viewBean']:
+                        if energy["getPlantMeterChartData"]['viewBean']["useElec"] is not None:
+                            self._state = float(energy["getPlantMeterChartData"]['viewBean']["useElec"])
+                if self._type == 'buyElec':
+                    if 'buyElec' in energy["getPlantMeterChartData"]['viewBean']:
+                        if energy["getPlantMeterChartData"]['viewBean']["buyElec"] is not None:
+                            self._state = float(energy["getPlantMeterChartData"]['viewBean']["buyElec"])
+                if self._type == 'sellElec':
+                    if 'sellElec' in energy["getPlantMeterChartData"]['viewBean']:
+                        if energy["getPlantMeterChartData"]['viewBean']["sellElec"] is not None:
+                            self._state = float(energy["getPlantMeterChartData"]['viewBean']["sellElec"])
+                if self._type == 'selfConsumedEnergy1':
+                    if 'selfConsumedEnergy1' in energy["getPlantMeterChartData"]['viewBean']:
+                        if energy["getPlantMeterChartData"]['viewBean']["selfConsumedEnergy1"] is not None:
+                            self._state = float(energy["getPlantMeterChartData"]['viewBean']["selfConsumedEnergy1"])
+                if self._type == 'selfConsumedEnergy2':
+                    if 'selfConsumedEnergy2' in energy["getPlantMeterChartData"]['viewBean']:
+                        if energy["getPlantMeterChartData"]['viewBean']["selfConsumedEnergy2"] is not None:
+                            self._state = float(energy["getPlantMeterChartData"]['viewBean']["selfConsumedEnergy2"])
+                if self._type == 'reduceCo2':
+                    if 'reduceCo2' in energy["getPlantMeterChartData"]['viewBean']:
+                        if energy["getPlantMeterChartData"]['viewBean']["reduceCo2"] is not None:
+                            self._state = float(energy["getPlantMeterChartData"]['viewBean']["reduceCo2"])
 
 
-            # getPlantMeterDetailInfo
-            if self._type == 'totalPvEnergy':
-                if 'totalPvEnergy' in energy["getPlantMeterDetailInfo"]['plantDetail']:
-                    if energy["getPlantMeterDetailInfo"]['plantDetail']["totalPvEnergy"] is not None:
-                        self._state = (energy["getPlantMeterDetailInfo"]['plantDetail']["totalPvEnergy"])
-            if self._type == 'totalLoadEnergy':
-                if 'totalLoadEnergy' in energy["getPlantMeterDetailInfo"]['plantDetail']:
-                    if energy["getPlantMeterDetailInfo"]['plantDetail']["totalLoadEnergy"] is not None:
-                        self._state = (energy["getPlantMeterDetailInfo"]['plantDetail']["totalLoadEnergy"])
-            if self._type == 'totalBuyEnergy':
-                if 'totalBuyEnergy' in energy["getPlantMeterDetailInfo"]['plantDetail']:
-                    if energy["getPlantMeterDetailInfo"]['plantDetail']["totalBuyEnergy"] is not None:
-                        self._state = (energy["getPlantMeterDetailInfo"]['plantDetail']["totalBuyEnergy"])
-            if self._type == 'totalSellEnergy':
-                if 'totalSellEnergy' in energy["getPlantMeterDetailInfo"]['plantDetail']:
-                    if energy["getPlantMeterDetailInfo"]['plantDetail']["totalSellEnergy"] is not None:
-                        self._state = (energy["getPlantMeterDetailInfo"]['plantDetail']["totalSellEnergy"])
+                if self._type == 'buyRate':
+                    if 'buyRate' in energy["getPlantMeterChartData"]['viewBean']:
+                        if energy["getPlantMeterChartData"]['viewBean']["buyRate"] is not None:
+                            self._state = (energy["getPlantMeterChartData"]['viewBean']["buyRate"])
+                if self._type == 'sellRate':
+                    if 'sellRate' in energy["getPlantMeterChartData"]['viewBean']:
+                        if energy["getPlantMeterChartData"]['viewBean']["sellRate"] is not None:
+                            self._state = (energy["getPlantMeterChartData"]['viewBean']["sellRate"])
+                if self._type == 'selfConsumedRate1':
+                    if 'selfConsumedRate1' in energy["getPlantMeterChartData"]['viewBean']:
+                        if energy["getPlantMeterChartData"]['viewBean']["selfConsumedRate1"] is not None:
+                            self._state = (energy["getPlantMeterChartData"]['viewBean']["selfConsumedRate1"])
+                if self._type == 'selfConsumedRate2':
+                    if 'selfConsumedRate2' in energy["getPlantMeterChartData"]['viewBean']:
+                        if energy["getPlantMeterChartData"]['viewBean']["selfConsumedRate2"] is not None:
+                            self._state = (energy["getPlantMeterChartData"]['viewBean']["selfConsumedRate2"])
+                if self._type == 'plantTreeNum':
+                    if 'plantTreeNum' in energy["getPlantMeterChartData"]['viewBean']:
+                        if energy["getPlantMeterChartData"]['viewBean']["plantTreeNum"] is not None:
+                            self._state = (energy["getPlantMeterChartData"]['viewBean']["plantTreeNum"])
+                                                
+
+                # dataCountList
+                if self._type == 'totalGridPower':
+                    if 'dataCountList' in energy:
+                        if energy["getPlantMeterChartData"]['dataCountList'][4][-1] is not None:
+                            self._state = float(energy["getPlantMeterChartData"]['dataCountList'][3][-1])
+                if self._type == 'totalLoadPower':
+                    if 'dataCountList' in energy:
+                        if energy["getPlantMeterChartData"]['dataCountList'][4][-1] is not None:
+                            self._state = float(energy["getPlantMeterChartData"]['dataCountList'][2][-1])
+                if self._type == 'totalPvgenPower':
+                    if 'dataCountList' in energy:
+                        if energy["getPlantMeterChartData"]['dataCountList'][4][-1] is not None:
+                            self._state = float(energy["getPlantMeterChartData"]['dataCountList'][4][-1])
+                
+
+                # getPlantMeterDetailInfo
+                if self._type == 'totalPvEnergy':
+                    if 'totalPvEnergy' in energy["getPlantMeterDetailInfo"]['plantDetail']:
+                        if energy["getPlantMeterDetailInfo"]['plantDetail']["totalPvEnergy"] is not None:
+                            self._state = (energy["getPlantMeterDetailInfo"]['plantDetail']["totalPvEnergy"])
+                if self._type == 'totalLoadEnergy':
+                    if 'totalLoadEnergy' in energy["getPlantMeterDetailInfo"]['plantDetail']:
+                        if energy["getPlantMeterDetailInfo"]['plantDetail']["totalLoadEnergy"] is not None:
+                            self._state = (energy["getPlantMeterDetailInfo"]['plantDetail']["totalLoadEnergy"])
+                if self._type == 'totalBuyEnergy':
+                    if 'totalBuyEnergy' in energy["getPlantMeterDetailInfo"]['plantDetail']:
+                        if energy["getPlantMeterDetailInfo"]['plantDetail']["totalBuyEnergy"] is not None:
+                            self._state = (energy["getPlantMeterDetailInfo"]['plantDetail']["totalBuyEnergy"])
+                if self._type == 'totalSellEnergy':
+                    if 'totalSellEnergy' in energy["getPlantMeterDetailInfo"]['plantDetail']:
+                        if energy["getPlantMeterDetailInfo"]['plantDetail']["totalSellEnergy"] is not None:
+                            self._state = (energy["getPlantMeterDetailInfo"]['plantDetail']["totalSellEnergy"])
+                
 
             # -Debug- adding sensor
             _LOGGER.debug("Device: {} State: {}".format(self._type, self._state))
