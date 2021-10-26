@@ -72,8 +72,6 @@ H1 Sensors:
       - monthElectricity
       - yearElectricity
       - totalElectricity # Energy -> Solar production
-      - todayGridIncome
-      - income
       - lastUploadTime
       - totalPlantTreeNum
       - totalReduceCo2
@@ -83,13 +81,22 @@ H1 Sensors:
       - currency
       - address
       - isOnline
-      - peakPower
-
       - devOnlineNum
       - selfUseRate
       - totalBuyElec # Energy -> Grid consumption
       - totalConsumpElec
       - totalSellElec # Energy -> Return to grid
+
+      - pvElec
+      - useElec
+      - buyElec
+      - sellElec
+      - buyRate
+      - sellRate
+      - selfConsumedRate1
+      - selfConsumedRate2
+      - selfConsumedEnergy1
+      - selfConsumedEnergy2
       - batCapcity
       - batCurr
       - batEnergyPercent
@@ -103,16 +110,6 @@ H1 Sensors:
       - pvDirection
       - pvPower
       - solarPower
-      - pvElec
-      - useElec
-      - buyElec
-      - sellElec
-      - buyRate
-      - sellRate
-      - selfConsumedRate1
-      - selfConsumedRate2
-      - selfConsumedEnergy1
-      - selfConsumedEnergy2
 ```
 <br>
 
