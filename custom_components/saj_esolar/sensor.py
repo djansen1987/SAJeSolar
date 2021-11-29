@@ -33,6 +33,7 @@ from homeassistant.const import (
     DEVICE_CLASS_POWER,
     ENERGY_KILO_WATT_HOUR,
     POWER_WATT,
+    PERCENTAGE,
 
 )
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -187,6 +188,8 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         key="totalConsumpElec",
         name="totalConsumpElec",
         icon="mdi:solar-panel",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
     ),
     SensorEntityDescription(
         key="totalSellElec",
@@ -394,6 +397,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         key="batCapcity",
         name="batCapcity",
         icon="mdi:solar-panel-large",
+        unit_of_measurement="A⋅h"
     ),
     SensorEntityDescription(
         key="batCurr",
@@ -404,6 +408,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         key="batEnergyPercent",
         name="batEnergyPercent",
         icon="mdi:solar-panel-large",
+        native_unit_of_measurement=PERCENTAGE,
     ),
     SensorEntityDescription(
         key="batteryDirection",
@@ -411,9 +416,16 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         icon="mdi:solar-panel-large",
     ),
     SensorEntityDescription(
+        key="batteryPower",
+        name="batteryPower",
+        icon="mdi:solar-panel-large",
+        native_unit_of_measurement=POWER_WATT,
+    ),
+    SensorEntityDescription(
         key="gridPower",
         name="gridPower",
         icon="mdi:solar-panel-large",
+        native_unit_of_measurement=POWER_WATT,
     ),
     SensorEntityDescription(
         key="h1Online",
@@ -424,6 +436,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         key="outPower",
         name="outPower",
         icon="mdi:solar-panel-large",
+        native_unit_of_measurement=POWER_WATT,
     ),
     SensorEntityDescription(
         key="outPutDirection",

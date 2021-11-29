@@ -194,6 +194,7 @@ Saj Sec Module:
 
 ### **Storage Solar Inverter**<br>
 #####  *H1-3~6K-S2* <br>
+#####  *AS1-3KS-5.1* (use h1 sensors)<br>
 
 <br>
 
@@ -206,7 +207,6 @@ Saj Sec Module:
 <br>
 
 ### **Storage Solar Inverter**<br>
-#####  *AS1-3KS-5.1* (not tested) <br>
 #####  *B1-5.1-48* (not tested) <br>
 
 <br><br>
