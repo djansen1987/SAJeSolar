@@ -397,7 +397,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         key="batCapcity",
         name="batCapcity",
         icon="mdi:solar-panel-large",
-        unit_of_measurement="A⋅h"
+        native_unit_of_measurement="A⋅h"
     ),
     SensorEntityDescription(
         key="batCurr",
