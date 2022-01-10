@@ -562,7 +562,7 @@ class SAJeSolarMeterData(object):
                 'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
             }
 
-            payload2= "pageNo=&pageSize=&orderByIndex=&officeId=&clientDate={}&runningState=&selectInputType=1&plantName=&deviceSn=&type=&countryCode=&isRename=&isTimeError=&systemPowerLeast=&systemPowerMost=".format(clientDate)
+            payload2= f"pageNo=&pageSize=&orderByIndex=&officeId=&clientDate={clientDate}&runningState=&selectInputType=1&plantName=&deviceSn=&type=&countryCode=&isRename=&isTimeError=&systemPowerLeast=&systemPowerMost="
             response2 = await self._session.post(url2, headers=headers, data=payload2)
 
             if response2.status != 200:
@@ -575,7 +575,7 @@ class SAJeSolarMeterData(object):
             
             # Get API Plant Solar Details
             url3 = "https://fop.saj-electric.com/saj/monitor/site/getPlantDetailInfo"   
-            payload3="plantuid={}&clientDate={}".format(plantuid,clientDate)
+            payload3= f"plantuid={plantuid}&clientDate={clientDate}"
 
             response3 = await self._session.post(url3, headers=headers, data=payload3)
 
@@ -601,8 +601,7 @@ class SAJeSolarMeterData(object):
             chartYear = today.strftime('%Y')
             epochmilliseconds = round(int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds() * 1000))            
                             
-            url4 = "https://fop.saj-electric.com/saj/monitor/site/getPlantDetailChart2?plantuid={}&chartDateType=1&energyType=0&clientDate={}&deviceSnArr={}&chartCountType=2&previousChartDay={}&nextChartDay={}&chartDay={}&previousChartMonth={}&nextChartMonth={}&chartMonth={}&previousChartYear={}&nextChartYear={}&chartYear={}&elecDevicesn=&_={}".format(plantuid,clientDate,deviceSnArr,previousChartDay,nextChartDay,chartDay,previousChartMonth,nextChartMonth,chartMonth,previousChartYear,nextChartYear,chartYear,epochmilliseconds)
-
+            url4 = f"https://fop.saj-electric.com/saj/monitor/site/getPlantDetailChart2?plantuid={plantuid}&chartDateType=1&energyType=0&clientDate={clientDate}&deviceSnArr={deviceSnArr}&chartCountType=2&previousChartDay={previousChartDay}&nextChartDay={nextChartDay}&chartDay={chartDay}&previousChartMonth={previousChartMonth}&nextChartMonth={nextChartMonth}&chartMonth={chartMonth}&previousChartYear={previousChartYear}&nextChartYear={nextChartYear}&chartYear={chartYear}&elecDevicesn=&_={epochmilliseconds}"
 
             response4 = await self._session.post(url4, headers=headers)
 
@@ -617,7 +616,7 @@ class SAJeSolarMeterData(object):
             # H1 Module
             if self.sensors == "h1":
                 # getStoreOrAcDevicePowerInfo
-                url_getStoreOrAcDevicePowerInfo = "https://fop.saj-electric.com/saj/monitor/site/getStoreOrAcDevicePowerInfo?plantuid=&devicesn={}&_={}".format(deviceSnArr,epochmilliseconds)
+                url_getStoreOrAcDevicePowerInfo = f"https://fop.saj-electric.com/saj/monitor/site/getStoreOrAcDevicePowerInfo?plantuid=&devicesn={deviceSnArr}&_={epochmilliseconds}"
 
                 response_getStoreOrAcDevicePowerInfo = await self._session.post(url_getStoreOrAcDevicePowerInfo, headers=headers)
 
@@ -643,7 +642,7 @@ class SAJeSolarMeterData(object):
                 # getPlantMeterModuleList
                 url_module = "https://fop.saj-electric.com/saj/cloudmonitor/plantMeterModule/getPlantMeterModuleList"
 
-                payload_module = "pageNo=&pageSize=&plantUid={}".format(plantuid)
+                payload_module = f"pageNo=&pageSize=&plantUid={plantuid}"
 
                 response_module = await self._session.post(url_module, headers=headers, data=payload_module)
             
@@ -667,7 +666,7 @@ class SAJeSolarMeterData(object):
                 # findDevicePageList
                 url_findDevicePageList = "https://fop.saj-electric.com/saj/cloudMonitor/device/findDevicePageList"
 
-                payload_findDevicePageList = "officeId=1&pageNo=&pageSize=&orderName=1&orderType=2&plantuid={}&deviceStatus=&localDate={}&localMonth={}".format(plantuid,chartMonth,chartMonth)
+                payload_findDevicePageList = f"officeId=1&pageNo=&pageSize=&orderName=1&orderType=2&plantuid={plantuid}&deviceStatus=&localDate={chartMonth}&localMonth={chartMonth}"
 
                 response_findDevicePageList = await self._session.post(url_findDevicePageList, headers=headers, data=payload_findDevicePageList)
 
@@ -685,7 +684,7 @@ class SAJeSolarMeterData(object):
                 # getPlantMeterDetailInfo
                 url_getPlantMeterDetailInfo = "https://fop.saj-electric.com/saj/monitor/site/getPlantMeterDetailInfo"
 
-                payload_getPlantMeterDetailInfo = "plantuid={}&clientDate={}".format(plantuid,clientDate)
+                payload_getPlantMeterDetailInfo = f"plantuid={plantuid}&clientDate={clientDate}"
 
                 response_getPlantMeterDetailInfo = await self._session.post(url_getPlantMeterDetailInfo, headers=headers, data=payload_getPlantMeterDetailInfo)
 
@@ -701,7 +700,7 @@ class SAJeSolarMeterData(object):
                 plantDetails.update(temp_getPlantMeterDetailInfo)
                 
                 # getPlantMeterEnergyPreviewInfo
-                url_getPlantMeterEnergyPreviewInfo = "https://fop.saj-electric.com/saj/monitor/site/getPlantMeterEnergyPreviewInfo?plantuid={}&moduleSn={}&_={}".format(plantuid,moduleSn,epochmilliseconds)
+                url_getPlantMeterEnergyPreviewInfo = f"https://fop.saj-electric.com/saj/monitor/site/getPlantMeterEnergyPreviewInfo?plantuid={plantuid}&moduleSn={moduleSn}&_={epochmilliseconds}"
 
                 response_getPlantMeterEnergyPreviewInfo = await self._session.get(url_getPlantMeterEnergyPreviewInfo, headers=headers)
 
@@ -717,7 +716,7 @@ class SAJeSolarMeterData(object):
                 plantDetails.update(temp_getPlantMeterEnergyPreviewInfo)
 
                 # Get Sec Meter details
-                url_getPlantMeterChartData = "https://fop.saj-electric.com/saj/monitor/site/getPlantMeterChartData?plantuid={}&chartDateType=1&energyType=0&clientDate={}&deviceSnArr=&chartCountType=2&previousChartDay={}&nextChartDay={}&chartDay={}&previousChartMonth={}&nextChartMonth={}&chartMonth={}&previousChartYear={}&nextChartYear={}&chartYear={}&moduleSn={}&_={}".format(plantuid,clientDate,previousChartDay,nextChartDay,chartDay,previousChartMonth,nextChartMonth,chartMonth,previousChartYear,nextChartYear,chartYear,moduleSn,epochmilliseconds)
+                url_getPlantMeterChartData = f"https://fop.saj-electric.com/saj/monitor/site/getPlantMeterChartData?plantuid={plantuid}&chartDateType=1&energyType=0&clientDate={clientDate}&deviceSnArr=&chartCountType=2&previousChartDay={previousChartDay}&nextChartDay={nextChartDay}&chartDay={chartDay}&previousChartMonth={previousChartMonth}&nextChartMonth={nextChartMonth}&chartMonth={chartMonth}&previousChartYear={previousChartYear}&nextChartYear={nextChartYear}&chartYear={chartYear}&moduleSn={moduleSn}&_={epochmilliseconds}"
 
                 response_getPlantMeterChartData = await self._session.post(url_getPlantMeterChartData, headers=headers)
 
@@ -989,7 +988,14 @@ class SAJeSolarMeterSensor(SensorEntity):
                 if self._type == 'batteryDirection':
                     if 'batteryDirection' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['batteryDirection'] is not None:
-                            self._state = int(energy["storeDevicePower"]["batteryDirection"])
+                            if energy["storeDevicePower"]["batteryDirection"] == 0:
+                                self._state = "Standby"
+                            elif energy["storeDevicePower"]["batteryDirection"] == 1:
+                                self._state = "Discharging"
+                            elif energy["storeDevicePower"]["batteryDirection"] == -1:
+                                self._state = "Charging"
+                            else:
+                                self._state = f'Unknown: {energy["storeDevicePower"]["batteryDirection"]}'
                 if self._type == 'batteryPower':
                     if 'batteryPower' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['batteryPower'] is not None:
@@ -1026,6 +1032,10 @@ class SAJeSolarMeterSensor(SensorEntity):
                     if 'solarPower' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['solarPower'] is not None:
                             self._state = float(energy["storeDevicePower"]["solarPower"])
+                if self._type == 'totalLoadPower':
+                    if 'totalLoadPower' in energy["storeDevicePower"]:
+                        if energy["storeDevicePower"]['totalLoadPower'] is not None:
+                            self._state = float(energy["storeDevicePower"]['totalLoadPower'])
 
             ########################################################################## Sec module Sensors:
             if self.sensors == "saj_sec":
@@ -1117,4 +1127,4 @@ class SAJeSolarMeterSensor(SensorEntity):
                 
 
             # -Debug- adding sensor
-            _LOGGER.debug("Device: {} State: {}".format(self._type, self._state))
+            _LOGGER.debug(f"Device: {self._type} State: {self._state}")

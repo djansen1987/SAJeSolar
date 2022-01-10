@@ -110,6 +110,7 @@ H1 Sensors:
       - pvDirection
       - pvPower
       - solarPower
+      - totalLoadPower
 ```
 <br>
 
