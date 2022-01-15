@@ -109,6 +109,8 @@ SENSOR_LIST = {
     "totalBuyEnergy",
     "totalSellEnergy",
     #h1
+    "chargeElec",
+    "dischargeElec",
     "batCapcity",
     "batCurr",
     "batEnergyPercent",
@@ -452,6 +454,22 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         key="solarPower",
         name="solarPower",
         icon="mdi:solar-panel-large",
+    ),
+    SensorEntityDescription(
+        key="chargeElec",
+        name="chargeElec",
+        icon="mdi:solar-panel-large",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+    ),
+    SensorEntityDescription(
+        key="dischargeElec",
+        name="dischargeElec",
+        icon="mdi:solar-panel-large",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
     ),
 )
 
@@ -932,6 +950,14 @@ class SAJeSolarMeterSensor(SensorEntity):
 
             ########################################################################## SAJ h1
             if self.sensors == "h1":
+                if self._type == 'chargeElec':
+                    if 'chargeElec' in energy['viewBean']:
+                        if energy['viewBean']["chargeElec"] is not None:
+                            self._state = float(energy['viewBean']["chargeElec"])
+                if self._type == 'dischargeElec':
+                    if 'dischargeElec' in energy['viewBean']:
+                        if energy['viewBean']["dischargeElec"] is not None:
+                            self._state = float(energy['viewBean']["dischargeElec"])
                 if self._type == 'buyElec':
                     if 'pvElec' in energy['viewBean']:
                         if energy['viewBean']["buyElec"] is not None:
@@ -972,7 +998,7 @@ class SAJeSolarMeterSensor(SensorEntity):
                     if 'useElec' in energy['viewBean']:
                         if energy['viewBean']["useElec"] is not None:
                             self._state = float(energy['viewBean']["useElec"])
-            # storeDevicePower
+                # storeDevicePower
                 if self._type == 'batCapcity':
                     if 'batCapcity' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['batCapcity'] is not None:

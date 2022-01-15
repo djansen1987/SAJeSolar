@@ -86,6 +86,8 @@ H1 Sensors:
       - totalBuyElec # Energy -> Grid consumption
       - totalConsumpElec
       - totalSellElec # Energy -> Return to grid
+      - chargeElec # Energy -> Home Battery Storage -> Energy going in to the battery (kWh)
+      - dischargeElec # Engery -> Home Battery Storage -> Energy coming out of the battery (kWh)
 
       - pvElec
       - useElec
