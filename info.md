@@ -75,7 +75,6 @@ H1 Sensors:
       - lastUploadTime
       - totalPlantTreeNum
       - totalReduceCo2
-      - todayAlarmNum
       - status
       - plantuid
       - currency
@@ -100,6 +99,7 @@ H1 Sensors:
       - selfConsumedEnergy1
       - selfConsumedEnergy2
       - batCapcity
+      - isAlarm
       - batCurr
       - batEnergyPercent
       - batteryDirection
