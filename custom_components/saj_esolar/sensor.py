@@ -1033,6 +1033,11 @@ class SAJeSolarMeterSensor(SensorEntity):
                         if energy["storeDevicePower"]['gridDirection'] is not None:
                             if energy["storeDevicePower"]["gridDirection"] == 1:
                                 self._state = "Exporting"
+                            elif energy["storeDevicePower"]["gridDirection"] == -1:
+                                self._state = "Importing"
+                            else:
+                                self._state = energy["storeDevicePower"]["gridDirection"]
+                                _LOGGER.error(f"Grid Direction unknown value: {self._state}")
                 if self._type == 'gridPower':
                     if 'gridPower' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['gridPower'] is not None:
