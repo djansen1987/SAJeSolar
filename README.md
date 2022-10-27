@@ -38,6 +38,7 @@ sensor:
   - platform: saj_esolar
     username: aa@bb.cc
     password: abcd1234
+    plant_id: 0 # Default is 0. Typically ordered in the same way as they are listed in the eSolar app
     resources:
       - nowPower
       - runningState
@@ -57,6 +58,7 @@ sensor:
       - address
       - isOnline
       - peakPower
+      - systemPower # Installed capacity
 ```
 
 <br>
