@@ -115,7 +115,7 @@ SENSOR_LIST = {
     "chargeElec",
     "dischargeElec",
     "batCapcity",
-    "isAlarm",
+    "isStorageAlarm",
     "batCurr",
     "batEnergyPercent",
     "batteryDirection",
@@ -413,9 +413,9 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         native_unit_of_measurement="A⋅h"
     ),
     SensorEntityDescription(
-        key="isAlarm",
-        name="isAlarm",
-        icon="mdi:solar-panel-large",
+        key="isStorageAlarm",
+        name="isStorageAlarm",
+        icon="mdi:alarm",
     ),
     SensorEntityDescription(
         key="batCurr",
@@ -1026,10 +1026,10 @@ class SAJeSolarMeterSensor(SensorEntity):
                     if 'batCapcity' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['batCapcity'] is not None:
                             self._state = float(energy["storeDevicePower"]["batCapcity"])
-                if self._type == 'isAlarm':
-                    if 'isAlarm' in energy["storeDevicePower"]:
-                        if energy["storeDevicePower"]['isAlarm'] is not None:
-                            self._state = int(energy["storeDevicePower"]["isAlarm"])
+                if self._type == 'isStorageAlarm':
+                    if 'isStorageAlarm' in energy["storeDevicePower"]:
+                        if energy["storeDevicePower"]['isStorageAlarm'] is not None:
+                            self._state = int(energy["storeDevicePower"]["isStorageAlarm"])
                 if self._type == 'batCurr':
                     if 'batCurr' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['batCurr'] is not None:
