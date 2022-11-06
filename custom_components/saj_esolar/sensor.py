@@ -952,7 +952,10 @@ class SAJeSolarMeterSensor(SensorEntity):
             if self._type == 'isOnline':
                 if 'isOnline' in energy['plantList'][self.plant_id]:
                     if energy['plantList'][self.plant_id]["isOnline"] is not None:
-                        self._state = (energy['plantList'][self.plant_id]["isOnline"])
+                        if int(energy'plantList'][self.plant_id]["isOnline"]) is 'N':
+                            self._state = "No"
+                        else:
+                            self._state = "Yes"
             if self._type == 'address':
                 if 'address' in energy['plantList'][self.plant_id]:
                     if energy['plantList'][self.plant_id]["address"] is not None:
