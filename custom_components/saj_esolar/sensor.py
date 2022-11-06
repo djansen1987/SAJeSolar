@@ -33,9 +33,11 @@ from homeassistant.const import (
     DEVICE_CLASS_POWER,
     ENERGY_KILO_WATT_HOUR,
     POWER_WATT,
+    POWER_KILO_WATT,
     PERCENTAGE,
 
 )
+CONF_PLANT_ID: Final = "plant_id"
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
@@ -84,6 +86,7 @@ SENSOR_LIST = {
     "isOnline",
     "status",
     "peakPower",
+    "systemPower",
     #sec & h1
     "pvElec",
     "useElec",
@@ -269,6 +272,13 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
     ),
+    SensorEntityDescription(
+        key="systemPower",
+        name="systemPower",
+        icon="mdi:solar-panel",
+        native_unit_of_measurement=POWER_KILO_WATT,
+        device_class=DEVICE_CLASS_POWER,
+    ),    
     SensorEntityDescription(
         key="pvElec",
         name="pvElec",
@@ -492,7 +502,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
             cv.ensure_list, [vol.In(SENSOR_LIST)]
         ),
         vol.Optional(CONF_SENSORS, default="None"): cv.string,
-        vol.Optional(CONF_DEVICE_ID, default=0): cv.positive_int,
+        vol.Optional(CONF_PLANT_ID, default=0): cv.positive_int,
+
     }
 )
 
@@ -501,13 +512,13 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     """Setup the SAJ eSolar sensors."""
 
     session = async_create_clientsession(hass)
-    data = SAJeSolarMeterData(session, config.get(CONF_USERNAME), config.get(CONF_PASSWORD), config.get(CONF_SENSORS), config.get(CONF_DEVICE_ID))
+    data = SAJeSolarMeterData(session, config.get(CONF_USERNAME), config.get(CONF_PASSWORD), config.get(CONF_SENSORS), config.get(CONF_PLANT_ID))
     await data.async_update()
 
     entities = []
     for description in SENSOR_TYPES:
         if description.key in config[CONF_RESOURCES]:
-            sensor = SAJeSolarMeterSensor(description, data, config.get(CONF_SENSORS))
+            sensor = SAJeSolarMeterSensor(description, data, config.get(CONF_SENSORS), config.get(CONF_PLANT_ID))
             entities.append(sensor)
     async_add_entities(entities, True)
     return True
@@ -515,7 +526,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 class SAJeSolarMeterData(object):
     """Handle eSolar object and limit updates."""
 
-    def __init__(self, session, username, password, sensors, sec_sn):
+    def __init__(self, session, username, password, sensors, plant_id):
         """Initialize the data object."""
 
         self._session = session
@@ -523,7 +534,7 @@ class SAJeSolarMeterData(object):
         self.username = username
         self.password = password
         self.sensors = sensors
-        self.sec_sn = sec_sn
+        self.plant_id = plant_id
         self._data = None
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
@@ -599,8 +610,7 @@ class SAJeSolarMeterData(object):
                 return
 
             plantInfo = await response2.json()
-            #_LOGGER.error(f"PlantInfo: {plantInfo}")
-            plantuid = plantInfo['plantList'][self.sec_sn]['plantuid']
+            plantuid = plantInfo['plantList'][self.plant_id]['plantuid']
 
 
             # Get API Plant Solar Details
@@ -619,7 +629,8 @@ class SAJeSolarMeterData(object):
 
 
             # getPlantDetailChart2
-            plantuid = plantDetails['plantList'][self.sec_sn]['plantuid']
+            plantuid = plantDetails['plantList'][self.plant_id]['plantuid']
+
             deviceSnArr = plantDetails['plantDetail']['snList'][0]
             previousChartDay = today - timedelta(days=1)
             nextChartDay = today + timedelta(days = 1)
@@ -815,13 +826,14 @@ class SAJeSolarMeterData(object):
 class SAJeSolarMeterSensor(SensorEntity):
     """Collecting data and return sensor entity."""
 
-    def __init__(self, description: SensorEntityDescription, data, sensors):
+    def __init__(self, description: SensorEntityDescription, data, sensors, plant_id):
         """Initialize the sensor."""
         self.entity_description = description
         self._data = data
 
         self._state = None
         self.sensors = sensors
+        self.plant_id = plant_id
         self._type = self.entity_description.key
         self._attr_icon = self.entity_description.icon
         self._attr_name = SENSOR_PREFIX + self.entity_description.name
@@ -922,30 +934,33 @@ class SAJeSolarMeterSensor(SensorEntity):
                         self._state = (energy['plantDetail']["totalReduceCo2"])
 
             if self._type == 'currency':
-                if 'currency' in energy['plantList'][0]:
-                    if energy['plantList'][0]["currency"] is not None:
-                        self._state = (energy['plantList'][0]["currency"])
+                if 'currency' in energy['plantList'][self.plant_id]:
+                    if energy['plantList'][self.plant_id]["currency"] is not None:
+                        self._state = (energy['plantList'][self.plant_id]["currency"])
             if self._type == 'plantuid':
-                if 'plantuid' in energy['plantList'][0]:
-                    if energy['plantList'][0]["plantuid"] is not None:
-                        self._state = (energy['plantList'][0]["plantuid"])
+                if 'plantuid' in energy['plantList'][self.plant_id]:
+                    if energy['plantList'][self.plant_id]["plantuid"] is not None:
+                        self._state = (energy['plantList'][self.plant_id]["plantuid"])
             if self._type == 'plantname':
-                if 'plantname' in energy['plantList'][0]:
-                    if energy['plantList'][0]["plantname"] is not None:
-                        self._state = (energy['plantList'][0]["plantname"])
+                if 'plantname' in energy['plantList'][self.plant_id]:
+                    if energy['plantList'][self.plant_id]["plantname"] is not None:
+                        self._state = (energy['plantList'][self.plant_id]["plantname"])
             if self._type == 'currency':
-                if 'currency' in energy['plantList'][0]:
-                    if energy['plantList'][0]["currency"] is not None:
-                        self._state = (energy['plantList'][0]["currency"])
+                if 'currency' in energy['plantList'][self.plant_id]:
+                    if energy['plantList'][self.plant_id]["currency"] is not None:
+                        self._state = (energy['plantList'][self.plant_id]["currency"])
             if self._type == 'isOnline':
-                if 'isOnline' in energy['plantList'][0]:
-                    if energy['plantList'][0]["isOnline"] is not None:
-                        self._state = (energy['plantList'][0]["isOnline"])
+                if 'isOnline' in energy['plantList'][self.plant_id]:
+                    if energy['plantList'][self.plant_id]["isOnline"] is not None:
+                        self._state = (energy['plantList'][self.plant_id]["isOnline"])
             if self._type == 'address':
-                if 'address' in energy['plantList'][0]:
-                    if energy['plantList'][0]["address"] is not None:
-                        self._state = (energy['plantList'][0]["address"])
-
+                if 'address' in energy['plantList'][self.plant_id]:
+                    if energy['plantList'][self.plant_id]["address"] is not None:
+                        self._state = (energy['plantList'][self.plant_id]["address"])
+            if self._type == 'systemPower':
+                if 'systempower' in energy['plantList'][self.plant_id]:
+                    if energy['plantList'][self.plant_id]["systempower"] is not None:
+                        self._state = (energy['plantList'][self.plant_id]["systempower"])
 
             if self._type == 'peakPower':
                 if 'peakPower' in energy:
