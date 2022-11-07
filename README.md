@@ -52,6 +52,7 @@ sensor:
       - totalPlantTreeNum
       - totalReduceCo2
       - todayAlarmNum
+      - isAlarm # Yes / No
       - status
       - plantuid
       - currency
