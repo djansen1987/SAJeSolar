@@ -79,6 +79,7 @@ SENSOR_LIST = {
     "totalPlantTreeNum",
     "totalReduceCo2",
     "isAlarm",
+    "todayAlarmNum",
     "plantuid",
     "plantname",
     "currency",
@@ -233,6 +234,11 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
     SensorEntityDescription(
         key="isAlarm",
         name="isAlarm",
+        icon="mdi:alarm",
+    ),
+    SensorEntityDescription(
+        key="todayAlarmNum",
+        name="todayAlarmNum",
         icon="mdi:alarm",
     ),
     SensorEntityDescription(
@@ -915,11 +921,19 @@ class SAJeSolarMeterSensor(SensorEntity):
                 if 'totalSellElec' in energy['plantDetail']:
                     if energy['plantDetail']["totalSellElec"] is not None:
                         self._state = float(energy['plantDetail']["totalSellElec"])
-
             if self._type == 'isAlarm':
-                if 'isAlarm' in energy['plantDetail']:
-                    if energy['plantDetail']["isAlarm"] is not None:
-                        self._state = (energy['plantDetail']["isAlarm"])
+                if 'todayAlarmNum' in energy['plantDetail']:
+                    if energy['plantDetail']["todayAlarmNum"] is not None:
+                        if int(energy['plantDetail']["todayAlarmNum"]) > 0:
+                            self._state = "Yes"
+                        elif int(energy['plantDetail']["todayAlarmNum"]) == 0:
+                            self._state = "No"
+                        else:
+                            self._state = "Unknown"
+            if self._type == 'todayAlarmNum':
+                if 'todayAlarmNum' in energy['plantDetail']:
+                    if energy['plantDetail']["todayAlarmNum"] is not None:
+                        self._state = (energy['plantDetail']["todayAlarmNum"])
             if self._type == 'lastUploadTime':
                 if 'lastUploadTime' in energy['plantDetail']:
                     if energy['plantDetail']["lastUploadTime"] is not None:
