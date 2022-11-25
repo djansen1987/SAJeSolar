@@ -24,11 +24,11 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
 )
 from homeassistant.const import (
-    CONF_RESOURCES,
+    # CONF_RESOURCES,
     CONF_USERNAME,
     CONF_PASSWORD,
     CONF_SENSORS,
-    CONF_DEVICE_ID,
+    # CONF_DEVICE_ID,
     DEVICE_CLASS_ENERGY,
     DEVICE_CLASS_POWER,
     ENERGY_KILO_WATT_HOUR,
@@ -65,71 +65,70 @@ SENSOR_PREFIX = 'esolar '
 ATTR_MEASUREMENT = "measurement"
 ATTR_SECTION = "section"
 
-SENSOR_LIST = {
-    "nowPower",
-    "runningState",
-    "devOnlineNum",
-    "todayElectricity",
-    "monthElectricity",
-    "yearElectricity",
-    "totalElectricity",
-    "todayGridIncome",
-    "income",
-    "lastUploadTime",
-    "totalPlantTreeNum",
-    "totalReduceCo2",
-    "isAlarm",
-    "todayAlarmNum",
-    "plantuid",
-    "plantname",
-    "currency",
-    "address",
-    "isOnline",
-    "status",
-    "peakPower",
-    "systemPower",
-    #sec & h1
-    "pvElec",
-    "useElec",
-    "buyElec",
-    "sellElec",
-    "buyRate",
-    "sellRate",
-    "selfUseRate",
-    "totalBuyElec",
-    "totalConsumpElec",
-    "totalSellElec",
-    "selfConsumedRate1",
-    "selfConsumedRate2",
-    "selfConsumedEnergy1",
-    "selfConsumedEnergy2",
-    "plantTreeNum",
-    "reduceCo2",
-    "totalGridPower",
-    "totalLoadPower",
-    "totalPvgenPower",
-    "totalPvEnergy",
-    "totalLoadEnergy",
-    "totalBuyEnergy",
-    "totalSellEnergy",
-    #h1
-    "chargeElec",
-    "dischargeElec",
-    "batCapcity",
-    "isStorageAlarm",
-    "batCurr",
-    "batEnergyPercent",
-    "batteryDirection",
-    "batteryPower",
-    "gridDirection",
-    "gridPower",
-    "h1Online",
-    "outPower",
-    "outPutDirection",
-    "pvDirection",
-    "pvPower",
-    "solarPower",
-}
+# SENSOR_LIST = {
+#     "nowPower",
+#     "runningState",
+#     "devOnlineNum",
+#     "todayElectricity",
+#     "monthElectricity",
+#     "yearElectricity",
+#     "totalElectricity",
+#     "todayGridIncome",
+#     "income",
+#     "lastUploadTime",
+#     "totalPlantTreeNum",
+#     "totalReduceCo2",
+#     "isAlarm",
+#     "plantuid",
+#     "plantname",
+#     "currency",
+#     "address",
+#     "isOnline",
+#     "status",
+#     "peakPower",
+#     "systemPower",
+#     #sec & h1
+#     "pvElec",
+#     "useElec",
+#     "buyElec",
+#     "sellElec",
+#     "buyRate",
+#     "sellRate",
+#     "selfUseRate",
+#     "totalBuyElec",
+#     "totalConsumpElec",
+#     "totalSellElec",
+#     "selfConsumedRate1",
+#     "selfConsumedRate2",
+#     "selfConsumedEnergy1",
+#     "selfConsumedEnergy2",
+#     "plantTreeNum",
+#     "reduceCo2",
+#     "totalGridPower",
+#     "totalLoadPower",
+#     "totalPvgenPower",
+#     "totalPvEnergy",
+#     "totalLoadEnergy",
+#     "totalBuyEnergy",
+#     "totalSellEnergy",
+#     #h1
+#     "chargeElec",
+#     "dischargeElec",
+#     "batCapcity",
+#     "isStorageAlarm",
+#     "batCurr",
+#     "batEnergyPercent",
+#     "batteryDirection",
+#     "batteryPower",
+#     "gridDirection",
+#     "gridPower",
+#     "h1Online",
+#     "outPower",
+#     "outPutDirection",
+#     "pvDirection",
+#     "pvPower",
+#     "solarPower",
+# }
 
 SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
     SensorEntityDescription(
@@ -237,11 +236,6 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         icon="mdi:alarm",
     ),
     SensorEntityDescription(
-        key="todayAlarmNum",
-        name="todayAlarmNum",
-        icon="mdi:alarm",
-    ),
-    SensorEntityDescription(
         key="plantuid",
         name="plantuid",
         icon="mdi:api",
@@ -282,7 +276,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         key="systemPower",
         name="systemPower",
         icon="mdi:solar-panel",
-        native_unit_of_measurement=POWER_KILO_WATT,
+        native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
     ),    
     SensorEntityDescription(
@@ -365,6 +359,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         name="totalGridPower",
         icon="mdi:solar-panel",
         native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
     ),
     SensorEntityDescription(
         key="totalLoadPower",
@@ -378,6 +373,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         name="totalPvgenPower",
         icon="mdi:solar-panel",
         native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
     ),
     SensorEntityDescription(
         key="totalPvEnergy",
@@ -444,16 +440,23 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         name="batteryPower",
         icon="mdi:solar-panel-large",
         native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
     ),
     SensorEntityDescription(
         key="gridPower",
         name="gridPower",
         icon="mdi:solar-panel-large",
         native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
     ),
     SensorEntityDescription(
         key="gridDirection",
         name="gridDirection",
+        icon="mdi:solar-panel-large"
+    ),
+    SensorEntityDescription(
+        key="pvDirection",
+        name="pvDirection",
         icon="mdi:solar-panel-large"
     ),
     SensorEntityDescription(
@@ -466,6 +469,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         name="outPower",
         icon="mdi:solar-panel-large",
         native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
     ),
     SensorEntityDescription(
         key="outPutDirection",
@@ -476,11 +480,15 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
         key="pvPower",
         name="pvPower",
         icon="mdi:solar-panel-large",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
     ),
     SensorEntityDescription(
         key="solarPower",
         name="solarPower",
         icon="mdi:solar-panel-large",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
     ),
     SensorEntityDescription(
         key="chargeElec",
@@ -504,9 +512,9 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_USERNAME): cv.string,
         vol.Required(CONF_PASSWORD): cv.string,
-        vol.Required(CONF_RESOURCES, default=list(SENSOR_LIST)): vol.All(
-            cv.ensure_list, [vol.In(SENSOR_LIST)]
-        ),
+        # vol.Required(CONF_RESOURCES, default=list(SENSOR_LIST)): vol.All(
+        #     cv.ensure_list, [vol.In(SENSOR_LIST)]
+        # ),
         vol.Optional(CONF_SENSORS, default="None"): cv.string,
         vol.Optional(CONF_PLANT_ID, default=0): cv.positive_int,
 
@@ -523,9 +531,9 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     entities = []
     for description in SENSOR_TYPES:
-        if description.key in config[CONF_RESOURCES]:
-            sensor = SAJeSolarMeterSensor(description, data, config.get(CONF_SENSORS), config.get(CONF_PLANT_ID))
-            entities.append(sensor)
+        # if description.key in config[CONF_RESOURCES]:
+        sensor = SAJeSolarMeterSensor(description, data, config.get(CONF_SENSORS), config.get(CONF_PLANT_ID))
+        entities.append(sensor)
     async_add_entities(entities, True)
     return True
 
@@ -583,6 +591,7 @@ class SAJeSolarMeterData(object):
                 : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36'
             }
             response = await self._session.post(url, headers=headers_login, data=payload)
+            _LOGGER.debug(f"login: {response}" )
 
             if response.status != 200:
                 _LOGGER.error(f"{response.url} returned {response.status}")
@@ -616,6 +625,10 @@ class SAJeSolarMeterData(object):
                 return
 
             plantInfo = await response2.json()
+            _LOGGER.debug(f"getUserPlantList: {plantInfo}" )
+            plantsnumber = len(plantInfo['plantList'])
+            if plantsnumber > 1:
+                _LOGGER.warning(f"Multiple instances found. Total: {plantsnumber}. Selected plant: {self.plant_id}")
             plantuid = plantInfo['plantList'][self.plant_id]['plantuid']
 
 
@@ -630,7 +643,8 @@ class SAJeSolarMeterData(object):
                 return
 
             plantDetails = await response3.json()
-            #_LOGGER.error(f"PlantDetails: {plantDetails}")
+            _LOGGER.debug(f"getPlantDetailInfo: {plantDetails}" )
+
             plantDetails.update(plantInfo)
 
 
@@ -658,98 +672,114 @@ class SAJeSolarMeterData(object):
                 return
 
             plantcharts = await response4.json()
+            _LOGGER.debug(f"getPlantDetailChart2: {plantcharts}" )
+
             #_LOGGER.error(f"PlantCharts: {plantcharts}")
             plantDetails.update(plantcharts)
 
 
             # H1 Module
-            if self.sensors == "h1":
-                # getStoreOrAcDevicePowerInfo
-                url_getStoreOrAcDevicePowerInfo = f"https://fop.saj-electric.com/saj/monitor/site/getStoreOrAcDevicePowerInfo?plantuid=&devicesn={deviceSnArr}&_={epochmilliseconds}"
+            # if self.sensors == "h1":
+            # getStoreOrAcDevicePowerInfo 
+            url_getStoreOrAcDevicePowerInfo = f"https://fop.saj-electric.com/saj/monitor/site/getStoreOrAcDevicePowerInfo?plantuid=&devicesn={deviceSnArr}&_={epochmilliseconds}"
 
-                response_getStoreOrAcDevicePowerInfo = await self._session.post(url_getStoreOrAcDevicePowerInfo, headers=headers)
+            response_getStoreOrAcDevicePowerInfo = await self._session.post(url_getStoreOrAcDevicePowerInfo, headers=headers)
 
-                if response_getStoreOrAcDevicePowerInfo.status != 200:
-                    _LOGGER.error(f"{response_getStoreOrAcDevicePowerInfo.url} returned {response_getStoreOrAcDevicePowerInfo.status}")
-                    return
+            if response_getStoreOrAcDevicePowerInfo.status != 200:
+                _LOGGER.error(f"{response_getStoreOrAcDevicePowerInfo.url} returned {response_getStoreOrAcDevicePowerInfo.status}")
+                return
 
-                result_getStoreOrAcDevicePowerInfo = await response_getStoreOrAcDevicePowerInfo.json()
-                #_LOGGER.error(f"{result_getStoreOrAcDevicePowerInfo}")
-                plantDetails.update(result_getStoreOrAcDevicePowerInfo)
-                _LOGGER.debug(result_getStoreOrAcDevicePowerInfo)
+            result_getStoreOrAcDevicePowerInfo = await response_getStoreOrAcDevicePowerInfo.json()
+            # _LOGGER.error(f"{result_getStoreOrAcDevicePowerInfo}")
+            _LOGGER.debug(f"getStoreOrAcDevicePowerInfo: {result_getStoreOrAcDevicePowerInfo}" )
 
-            elif self.sensors == "None":
-                self._data = plantDetails
-            else:
-                # Data = plantdetails
-                self._data = plantDetails
+            plantDetails.update(result_getStoreOrAcDevicePowerInfo)
+
+            # elif self.sensors == "None":
+            #     self._data = plantDetails
+            # else:
+            #     # Data = plantdetails
+            #     self._data = plantDetails
+
 
 
 
             # Sec module
-            if self.sensors == "saj_sec":
+            # if self.sensors == "saj_sec":
 
-                # getPlantMeterModuleList
-                url_module = "https://fop.saj-electric.com/saj/cloudmonitor/plantMeterModule/getPlantMeterModuleList"
+            # getPlantMeterModuleList
+            url_module = "https://fop.saj-electric.com/saj/cloudmonitor/plantMeterModule/getPlantMeterModuleList"
 
-                payload_module = f"pageNo=&pageSize=&plantUid={plantuid}"
+            payload_module = f"pageNo=&pageSize=&plantUid={plantuid}"
 
-                response_module = await self._session.post(url_module, headers=headers, data=payload_module)
+            response_module = await self._session.post(url_module, headers=headers, data=payload_module)
 
-                if response_module.status != 200:
-                    _LOGGER.error(f"{response_module.url} returned {response_module.status}")
-                    return
+            if response_module.status != 200:
+                _LOGGER.error(f"{response_module.url} returned {response_module.status}")
+                return
 
-                getPlantMeterModuleList = await response_module.json()
-
-                temp_getPlantMeterModuleList = dict()
-                temp_getPlantMeterModuleList["getPlantMeterModuleList"] = getPlantMeterModuleList
-
-                plantDetails.update(temp_getPlantMeterModuleList)
-
-                moduleSn = plantDetails["getPlantMeterModuleList"]['moduleList'][0]['moduleSn']
-
-                # -Debug- Sec module serial number
-                _LOGGER.debug(moduleSn)
+            getPlantMeterModuleList = await response_module.json()
+            _LOGGER.debug(f"getPlantMeterModuleList: {getPlantMeterModuleList}" )
 
 
-                # findDevicePageList
-                url_findDevicePageList = "https://fop.saj-electric.com/saj/cloudMonitor/device/findDevicePageList"
+            temp_getPlantMeterModuleList = dict()
+            temp_getPlantMeterModuleList["getPlantMeterModuleList"] = getPlantMeterModuleList
 
-                payload_findDevicePageList = f"officeId=1&pageNo=&pageSize=&orderName=1&orderType=2&plantuid={plantuid}&deviceStatus=&localDate={chartMonth}&localMonth={chartMonth}"
+            plantDetails.update(temp_getPlantMeterModuleList)
 
-                response_findDevicePageList = await self._session.post(url_findDevicePageList, headers=headers, data=payload_findDevicePageList)
+            modulelistlength = len(plantDetails["getPlantMeterModuleList"]['moduleList'])
+            _LOGGER.warning(f"module list length: {modulelistlength}")
+            if plantDetails["getPlantMeterModuleList"]['moduleList'] is not None:
+                if modulelistlength > 0:
+                    moduleSn = plantDetails["getPlantMeterModuleList"]['moduleList'][0]['moduleSn']
 
-                if response_findDevicePageList.status != 200:
-                    _LOGGER.error(f"{response_findDevicePageList.url} returned {response_findDevicePageList.status}")
-                    return
+                    # -Debug- Sec module serial number
+                    _LOGGER.debug(moduleSn)
 
-                findDevicePageList = await response_findDevicePageList.json()
 
-                temp_findDevicePageList = dict()
-                temp_findDevicePageList["findDevicePageList"] = findDevicePageList
+            # findDevicePageList
+            url_findDevicePageList = "https://fop.saj-electric.com/saj/cloudMonitor/device/findDevicePageList"
 
-                plantDetails.update(temp_findDevicePageList)
+            payload_findDevicePageList = f"officeId=1&pageNo=&pageSize=&orderName=1&orderType=2&plantuid={plantuid}&deviceStatus=&localDate={chartMonth}&localMonth={chartMonth}"
 
-                # getPlantMeterDetailInfo
-                url_getPlantMeterDetailInfo = "https://fop.saj-electric.com/saj/monitor/site/getPlantMeterDetailInfo"
+            response_findDevicePageList = await self._session.post(url_findDevicePageList, headers=headers, data=payload_findDevicePageList)
 
-                payload_getPlantMeterDetailInfo = f"plantuid={plantuid}&clientDate={clientDate}"
+            if response_findDevicePageList.status != 200:
+                _LOGGER.error(f"{response_findDevicePageList.url} returned {response_findDevicePageList.status}")
+                return
 
-                response_getPlantMeterDetailInfo = await self._session.post(url_getPlantMeterDetailInfo, headers=headers, data=payload_getPlantMeterDetailInfo)
+            findDevicePageList = await response_findDevicePageList.json()
+            _LOGGER.debug(f"findDevicePageList: {findDevicePageList}" )
 
-                if response_getPlantMeterDetailInfo.status != 200:
-                    _LOGGER.error(f"{response_getPlantMeterDetailInfo.url} returned {response_getPlantMeterDetailInfo.status}")
-                    return
+            temp_findDevicePageList = dict()
+            temp_findDevicePageList["findDevicePageList"] = findDevicePageList
 
-                getPlantMeterDetailInfo = await response_getPlantMeterDetailInfo.json()
+            plantDetails.update(temp_findDevicePageList)
 
-                temp_getPlantMeterDetailInfo = dict()
-                temp_getPlantMeterDetailInfo["getPlantMeterDetailInfo"] = getPlantMeterDetailInfo
+            
 
-                plantDetails.update(temp_getPlantMeterDetailInfo)
+            # getPlantMeterDetailInfo
+            url_getPlantMeterDetailInfo = "https://fop.saj-electric.com/saj/monitor/site/getPlantMeterDetailInfo"
 
-                # getPlantMeterEnergyPreviewInfo
+            payload_getPlantMeterDetailInfo = f"plantuid={plantuid}&clientDate={clientDate}"
+
+            response_getPlantMeterDetailInfo = await self._session.post(url_getPlantMeterDetailInfo, headers=headers, data=payload_getPlantMeterDetailInfo)
+
+            if response_getPlantMeterDetailInfo.status != 200:
+                _LOGGER.error(f"{response_getPlantMeterDetailInfo.url} returned {response_getPlantMeterDetailInfo.status}")
+                return
+
+            getPlantMeterDetailInfo = await response_getPlantMeterDetailInfo.json()
+            _LOGGER.debug(f"getPlantMeterDetailInfo: {getPlantMeterDetailInfo}" )
+
+            temp_getPlantMeterDetailInfo = dict()
+            temp_getPlantMeterDetailInfo["getPlantMeterDetailInfo"] = getPlantMeterDetailInfo
+
+            plantDetails.update(temp_getPlantMeterDetailInfo)
+
+            
+            # getPlantMeterEnergyPreviewInfo
+            if modulelistlength > 0:
                 url_getPlantMeterEnergyPreviewInfo = f"https://fop.saj-electric.com/saj/monitor/site/getPlantMeterEnergyPreviewInfo?plantuid={plantuid}&moduleSn={moduleSn}&_={epochmilliseconds}"
 
                 response_getPlantMeterEnergyPreviewInfo = await self._session.get(url_getPlantMeterEnergyPreviewInfo, headers=headers)
@@ -759,11 +789,14 @@ class SAJeSolarMeterData(object):
                     return
 
                 getPlantMeterEnergyPreviewInfo = await response_getPlantMeterEnergyPreviewInfo.json()
+                _LOGGER.debug(f"getPlantMeterEnergyPreviewInfo: {getPlantMeterEnergyPreviewInfo}" )
 
                 temp_getPlantMeterEnergyPreviewInfo = dict()
                 temp_getPlantMeterEnergyPreviewInfo["getPlantMeterEnergyPreviewInfo"] = getPlantMeterEnergyPreviewInfo
 
                 plantDetails.update(temp_getPlantMeterEnergyPreviewInfo)
+
+            
 
                 # Get Sec Meter details
                 url_getPlantMeterChartData = f"https://fop.saj-electric.com/saj/monitor/site/getPlantMeterChartData?plantuid={plantuid}&chartDateType=1&energyType=0&clientDate={clientDate}&deviceSnArr=&chartCountType=2&previousChartDay={previousChartDay}&nextChartDay={nextChartDay}&chartDay={chartDay}&previousChartMonth={previousChartMonth}&nextChartMonth={nextChartMonth}&chartMonth={chartMonth}&previousChartYear={previousChartYear}&nextChartYear={nextChartYear}&chartYear={chartYear}&moduleSn={moduleSn}&_={epochmilliseconds}"
@@ -775,6 +808,7 @@ class SAJeSolarMeterData(object):
                     return
 
                 getPlantMeterChartData = await response_getPlantMeterChartData.json()
+                _LOGGER.debug(f"getPlantMeterChartData: {getPlantMeterChartData}" )
 
                 temp_getPlantMeterChartData = dict()
                 temp_getPlantMeterChartData["getPlantMeterChartData"] = getPlantMeterChartData
@@ -782,12 +816,12 @@ class SAJeSolarMeterData(object):
                 plantDetails.update(temp_getPlantMeterChartData)
 
                 # Data = plantdetails including Sec module
-                self._data = plantDetails
-            elif self.sensors == "None":
-                self._data = plantDetails
-            else:
-                # Data = plantdetails Wtihout Sec module
-                self._data = plantDetails
+            #     self._data = plantDetails
+            # elif self.sensors == "None":
+            #     self._data = plantDetails
+            # else:
+            #     # Data = plantdetails Wtihout Sec module
+            self._data = plantDetails
 
         # Error logging
         except aiohttp.ClientError:
@@ -921,19 +955,11 @@ class SAJeSolarMeterSensor(SensorEntity):
                 if 'totalSellElec' in energy['plantDetail']:
                     if energy['plantDetail']["totalSellElec"] is not None:
                         self._state = float(energy['plantDetail']["totalSellElec"])
+
             if self._type == 'isAlarm':
-                if 'todayAlarmNum' in energy['plantDetail']:
-                    if energy['plantDetail']["todayAlarmNum"] is not None:
-                        if int(energy['plantDetail']["todayAlarmNum"]) > 0:
-                            self._state = "Yes"
-                        elif int(energy['plantDetail']["todayAlarmNum"]) == 0:
-                            self._state = "No"
-                        else:
-                            self._state = "Unknown"
-            if self._type == 'todayAlarmNum':
-                if 'todayAlarmNum' in energy['plantDetail']:
-                    if energy['plantDetail']["todayAlarmNum"] is not None:
-                        self._state = (energy['plantDetail']["todayAlarmNum"])
+                if 'isAlarm' in energy['plantDetail']:
+                    if energy['plantDetail']["isAlarm"] is not None:
+                        self._state = (energy['plantDetail']["isAlarm"])
             if self._type == 'lastUploadTime':
                 if 'lastUploadTime' in energy['plantDetail']:
                     if energy['plantDetail']["lastUploadTime"] is not None:
@@ -986,7 +1012,8 @@ class SAJeSolarMeterSensor(SensorEntity):
                         self._state = (energy["status"])
 
             ########################################################################## SAJ h1
-            if self.sensors == "h1":
+            # if self.sensors == "h1":
+            if 'viewBean' in energy:
                 if self._type == 'chargeElec':
                     if 'chargeElec' in energy['viewBean']:
                         if energy['viewBean']["chargeElec"] is not None:
@@ -1035,7 +1062,9 @@ class SAJeSolarMeterSensor(SensorEntity):
                     if 'useElec' in energy['viewBean']:
                         if energy['viewBean']["useElec"] is not None:
                             self._state = float(energy['viewBean']["useElec"])
-                # storeDevicePower
+            
+            # storeDevicePower
+            if 'storeDevicePower' in energy:
                 if self._type == 'batCapcity':
                     if 'batCapcity' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['batCapcity'] is not None:
@@ -1095,11 +1124,23 @@ class SAJeSolarMeterSensor(SensorEntity):
                 if self._type == 'outPutDirection':
                     if 'outPutDirection' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['outPutDirection'] is not None:
-                            self._state = float(energy["storeDevicePower"]["outPutDirection"])
+                            if energy["storeDevicePower"]["outPutDirection"] == 1:
+                                self._state = "Exporting"
+                            elif energy["storeDevicePower"]["outPutDirection"] == -1:
+                                self._state = "Importing"
+                            else:
+                                self._state = energy["storeDevicePower"]["outPutDirection"]
+                                _LOGGER.error(f"outPut Direction unknown value: {self._state}")
                 if self._type == 'pvDirection':
                     if 'pvDirection' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['pvDirection'] is not None:
-                            self._state = int(energy["storeDevicePower"]["pvDirection"])
+                            if energy["storeDevicePower"]["pvDirection"] == 1:
+                                self._state = "Exporting"
+                            elif energy["storeDevicePower"]["pvDirection"] == -1:
+                                self._state = "Importing"
+                            else:
+                                self._state = energy["storeDevicePower"]["pvDirection"]
+                                _LOGGER.error(f"pv Direction unknown value: {self._state}")
                 if self._type == 'pvPower':
                     if 'pvPower' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['pvPower'] is not None:
@@ -1114,8 +1155,9 @@ class SAJeSolarMeterSensor(SensorEntity):
                             self._state = float(energy["storeDevicePower"]['totalLoadPower'])
 
             ########################################################################## Sec module Sensors:
-            if self.sensors == "saj_sec":
-                # getPlantMeterChartData - viewBeam
+            # if self.sensors == "saj_sec":
+            # getPlantMeterChartData - viewBeam
+            if 'getPlantMeterChartData' in energy:
                 if self._type == 'pvElec':
                     if 'pvElec' in energy["getPlantMeterChartData"]['viewBean']:
                         if energy["getPlantMeterChartData"]['viewBean']["pvElec"] is not None:
