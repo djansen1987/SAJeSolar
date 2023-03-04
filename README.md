@@ -51,8 +51,6 @@ sensor:
       - lastUploadTime
       - totalPlantTreeNum
       - totalReduceCo2
-      - todayAlarmNum
-      - isAlarm # Yes / No
       - status
       - plantuid
       - currency
@@ -64,7 +62,7 @@ sensor:
 
 <br>
 
-H1 Sensors:
+If you have a H1 device, add below Sensors and Resouces:
 
 ```yaml
     sensors: h1
@@ -102,7 +100,6 @@ H1 Sensors:
       - selfConsumedEnergy1
       - selfConsumedEnergy2
       - batCapcity
-      - isAlarm
       - batCurr
       - batEnergyPercent
       - batteryDirection
@@ -119,7 +116,7 @@ H1 Sensors:
 ```
 <br>
 
-Saj Sec Module:
+If you have a Saj Sec Module Add below sensor an resources:
 
 ```yaml
     sensors: saj_sec # Optional will only work with SAJ Sec Module
@@ -135,7 +132,6 @@ Saj Sec Module:
       - lastUploadTime
       - totalPlantTreeNum
       - totalReduceCo2
-      - todayAlarmNum
       - status
       - plantuid
       - currency

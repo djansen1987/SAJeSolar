@@ -915,11 +915,6 @@ class SAJeSolarMeterSensor(SensorEntity):
                 if 'totalSellElec' in energy['plantDetail']:
                     if energy['plantDetail']["totalSellElec"] is not None:
                         self._state = float(energy['plantDetail']["totalSellElec"])
-
-            if self._type == 'isAlarm':
-                if 'isAlarm' in energy['plantDetail']:
-                    if energy['plantDetail']["isAlarm"] is not None:
-                        self._state = (energy['plantDetail']["isAlarm"])
             if self._type == 'lastUploadTime':
                 if 'lastUploadTime' in energy['plantDetail']:
                     if energy['plantDetail']["lastUploadTime"] is not None:
@@ -1074,6 +1069,13 @@ class SAJeSolarMeterSensor(SensorEntity):
                                 self._state = "No"
                             else:
                                 self._state = "Yes"
+                if self._type == 'h1Online':
+                    if 'isOnline' in energy["storeDevicePower"]:
+                        if energy["storeDevicePower"]['isOnline'] is not None:
+                            if int(energy['storeDevicePower']["isOnline"]) is 0:
+                                self._state = "No"
+                            else:
+                                self._state = "Yes"
                 if self._type == 'outPower':
                     if 'outPower' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['outPower'] is not None:
@@ -1081,11 +1083,23 @@ class SAJeSolarMeterSensor(SensorEntity):
                 if self._type == 'outPutDirection':
                     if 'outPutDirection' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['outPutDirection'] is not None:
-                            self._state = float(energy["storeDevicePower"]["outPutDirection"])
+                            if energy["storeDevicePower"]["outPutDirection"] == 1:
+                                self._state = "Exporting"
+                            elif energy["storeDevicePower"]["outPutDirection"] == -1:
+                                self._state = "Importing"
+                            else:
+                                self._state = energy["storeDevicePower"]["outPutDirection"]
+                                _LOGGER.error(f"outPut Direction unknown value: {self._state}")
                 if self._type == 'pvDirection':
                     if 'pvDirection' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['pvDirection'] is not None:
-                            self._state = int(energy["storeDevicePower"]["pvDirection"])
+                            if energy["storeDevicePower"]["pvDirection"] == 1:
+                                self._state = "Exporting"
+                            elif energy["storeDevicePower"]["pvDirection"] == -1:
+                                self._state = "Importing"
+                            else:
+                                self._state = energy["storeDevicePower"]["pvDirection"]
+                                _LOGGER.error(f"pv Direction unknown value: {self._state}")
                 if self._type == 'pvPower':
                     if 'pvPower' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['pvPower'] is not None:
@@ -1130,8 +1144,6 @@ class SAJeSolarMeterSensor(SensorEntity):
                     if 'reduceCo2' in energy["getPlantMeterChartData"]['viewBean']:
                         if energy["getPlantMeterChartData"]['viewBean']["reduceCo2"] is not None:
                             self._state = float(energy["getPlantMeterChartData"]['viewBean']["reduceCo2"])
-
-
                 if self._type == 'buyRate':
                     if 'buyRate' in energy["getPlantMeterChartData"]['viewBean']:
                         if energy["getPlantMeterChartData"]['viewBean']["buyRate"] is not None:

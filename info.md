@@ -38,6 +38,7 @@ sensor:
   - platform: saj_esolar
     username: aa@bb.cc
     password: abcd1234
+    plant_id: 0 # Default is 0. Typically ordered in the same way as they are listed in the eSolar app
     resources:
       - nowPower
       - runningState
@@ -50,18 +51,19 @@ sensor:
       - lastUploadTime
       - totalPlantTreeNum
       - totalReduceCo2
-      - todayAlarmNum
+      - isAlarm # Yes / No
       - status
       - plantuid
       - currency
       - address
       - isOnline
       - peakPower
+      - systemPower # Installed capacity
 ```
 
 <br>
 
-H1 Sensors:
+If you have a H1 device, add below Sensors and Resouces:
 
 ```yaml
     sensors: h1
@@ -75,6 +77,7 @@ H1 Sensors:
       - lastUploadTime
       - totalPlantTreeNum
       - totalReduceCo2
+      - isAlarm # Yes / No
       - status
       - plantuid
       - currency
@@ -116,7 +119,7 @@ H1 Sensors:
 ```
 <br>
 
-Saj Sec Module:
+If you have a Saj Sec Module Add below sensor an resources:
 
 ```yaml
     sensors: saj_sec # Optional will only work with SAJ Sec Module
@@ -132,7 +135,7 @@ Saj Sec Module:
       - lastUploadTime
       - totalPlantTreeNum
       - totalReduceCo2
-      - todayAlarmNum
+      - isAlarm # Yes / No
       - status
       - plantuid
       - currency
@@ -202,7 +205,7 @@ Saj Sec Module:
 <br>
 
 ### **Greenheiss**<br>
-#### GH-I 2M STYLE <br>
+#### GH-I 2M STYLE
 
 <br>
 
