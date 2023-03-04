@@ -51,7 +51,6 @@ sensor:
       - lastUploadTime
       - totalPlantTreeNum
       - totalReduceCo2
-      - isAlarm # Yes / No
       - status
       - plantuid
       - currency
@@ -66,6 +65,10 @@ sensor:
 If you have a H1 device, add below Sensors and Resouces:
 
 ```yaml
+  - platform: saj_esolar
+    username: aa@bb.cc
+    password: abcd1234
+    plant_id: 0 # Default is 0. Typically ordered in the same way as they are listed in the eSolar app
     sensors: h1
     resources:
       - nowPower
@@ -77,7 +80,6 @@ If you have a H1 device, add below Sensors and Resouces:
       - lastUploadTime
       - totalPlantTreeNum
       - totalReduceCo2
-      - isAlarm # Yes / No
       - status
       - plantuid
       - currency
@@ -102,7 +104,6 @@ If you have a H1 device, add below Sensors and Resouces:
       - selfConsumedEnergy1
       - selfConsumedEnergy2
       - batCapcity
-      - isAlarm
       - batCurr
       - batEnergyPercent
       - batteryDirection
@@ -122,6 +123,10 @@ If you have a H1 device, add below Sensors and Resouces:
 If you have a Saj Sec Module Add below sensor an resources:
 
 ```yaml
+  - platform: saj_esolar
+    username: aa@bb.cc
+    password: abcd1234
+    plant_id: 0 # Default is 0. Typically ordered in the same way as they are listed in the eSolar app
     sensors: saj_sec # Optional will only work with SAJ Sec Module
     resources:
       - nowPower
@@ -135,7 +140,6 @@ If you have a Saj Sec Module Add below sensor an resources:
       - lastUploadTime
       - totalPlantTreeNum
       - totalReduceCo2
-      - isAlarm # Yes / No
       - status
       - plantuid
       - currency
