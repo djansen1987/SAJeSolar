@@ -870,10 +870,8 @@ class SAJeSolarMeterSensor(SensorEntity):
                     if energy['plantDetail']["runningState"] is not None:
                         if int(energy['plantDetail']["runningState"]) is 0:
                             self._state = "No"
-                        elif int(energy['plantDetail']["runningState"]) is 1
-                            self._state = "Yes"
                         else:
-                            self._state = "Error"
+                            self._state = "Yes"
             if self._type == 'todayElectricity':
                 if 'todayElectricity' in energy['plantDetail']:
                     if energy['plantDetail']["todayElectricity"] is not None:
