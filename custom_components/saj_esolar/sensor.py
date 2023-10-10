@@ -809,7 +809,7 @@ class SAJeSolarMeterData(object):
 
         # Clear session and cookies
         self._session.cookie_jar.clear()
-        self._session.close()
+        await self._session.close()
 
     @property
     def latest_data(self):
