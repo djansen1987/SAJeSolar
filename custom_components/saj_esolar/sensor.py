@@ -856,10 +856,7 @@ class SAJeSolarMeterSensor(SensorEntity):
             if self._type == 'devOnlineNum':
                 if 'devOnlineNum' in energy['plantDetail']:
                     if energy['plantDetail']["devOnlineNum"] is not None:
-                        if int(energy['plantDetail']["devOnlineNum"]) is 0:
-                            self._state = "No"
-                        else:
-                            self._state = "Yes"
+                        self._state = "Yes" if int(energy['plantDetail']["devOnlineNum"]) else "No"
             if self._type == 'nowPower':
                 if 'nowPower' in energy['plantDetail']:
                     if energy['plantDetail']["nowPower"] is not None:
@@ -867,10 +864,7 @@ class SAJeSolarMeterSensor(SensorEntity):
             if self._type == 'runningState':
                 if 'runningState' in energy['plantDetail']:
                     if energy['plantDetail']["runningState"] is not None:
-                        if int(energy['plantDetail']["runningState"]) is 0:
-                            self._state = "No"
-                        else:
-                            self._state = "Yes"
+                        self._state = "Yes" if int(energy['plantDetail']["runningState"]) else "No"
             if self._type == 'todayElectricity':
                 if 'todayElectricity' in energy['plantDetail']:
                     if energy['plantDetail']["todayElectricity"] is not None:
@@ -1061,17 +1055,7 @@ class SAJeSolarMeterSensor(SensorEntity):
                 if self._type == 'h1Online':
                     if 'isOnline' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['isOnline'] is not None:
-                            if int(energy['storeDevicePower']["isOnline"]) is 0:
-                                self._state = "No"
-                            else:
-                                self._state = "Yes"
-                if self._type == 'h1Online':
-                    if 'isOnline' in energy["storeDevicePower"]:
-                        if energy["storeDevicePower"]['isOnline'] is not None:
-                            if int(energy['storeDevicePower']["isOnline"]) is 0:
-                                self._state = "No"
-                            else:
-                                self._state = "Yes"
+                            self._state = "Yes" if int(energy['storeDevicePower']["isOnline"]) else "No"
                 if self._type == 'outPower':
                     if 'outPower' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['outPower'] is not None:
