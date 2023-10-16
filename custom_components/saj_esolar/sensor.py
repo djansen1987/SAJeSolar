@@ -4,6 +4,7 @@ This Sensor will read the private api of the eSolar portal at https://fop.saj-el
 """
 
 import asyncio
+import this
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from datetime import timedelta
 import datetime
@@ -35,6 +36,7 @@ from homeassistant.const import (
 
 )
 CONF_PLANT_ID: Final = "plant_id"
+CONF_ESOLAR_PROVIDER: Final= "provider"
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
@@ -501,6 +503,10 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         ),
         vol.Optional(CONF_SENSORS, default="None"): cv.string,
         vol.Optional(CONF_PLANT_ID, default=0): cv.positive_int,
+        vol.Optional("provider_domain",default="fop.saj-electric.com"): cv.string,
+        vol.Optional("provider_path", default="saj"):cv.string,
+        vol.Optional("provider_protocol", default="https"):cv.string,
+  
 
     }
 )
@@ -509,8 +515,9 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     """Setup the SAJ eSolar sensors."""
 
-    session = async_create_clientsession(hass)
-    data = SAJeSolarMeterData(session, config.get(CONF_USERNAME), config.get(CONF_PASSWORD), config.get(CONF_SENSORS), config.get(CONF_PLANT_ID))
+    session = async_create_clientsession(hass,verify_ssl=False) #some providers have broken SSL chains
+    provider= EsolarProvider(config.get("provider_domain"),config.get("provider_path"),config.get("provider_protocol"))
+    data = SAJeSolarMeterData(session, config.get(CONF_USERNAME), config.get(CONF_PASSWORD), config.get(CONF_SENSORS), config.get(CONF_PLANT_ID),provider)
     await data.async_update()
 
     entities = []
@@ -521,19 +528,38 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     async_add_entities(entities, True)
     return True
 
+class EsolarProvider(object):
+    """Handless the information of the url of a particular esolar provider (e.g. saj, greenheiss)"""
+    def __init__(self,host,path,protocol):
+         self.host=host
+         self.path=path
+         self.protocol=protocol
+    
+    def getBaseDomain(self):
+        return f"{self.protocol}://{self.host}"
+
+    def getBaseUrl(self):
+        return f"{self.getBaseDomain()}/{self.path}"
+
+    def getLoginUrl(self):
+        return f"{self.getBaseUrl()}/login"
+    
+
+
 class SAJeSolarMeterData(object):
     """Handle eSolar object and limit updates."""
 
-    def __init__(self, session, username, password, sensors, plant_id):
+    def __init__(self, session, username, password, sensors, plant_id, provider):
         """Initialize the data object."""
 
         self._session = session
-        self._url = BASE_URL
+        self._provider=provider
         self.username = username
         self.password = password
         self.sensors = sensors
         self.plant_id = plant_id
         self._data = None
+
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     async def async_update(self):
@@ -545,7 +571,7 @@ class SAJeSolarMeterData(object):
             clientDate = today.strftime('%Y-%m-%d')
 
             # Login to eSolar API
-            url = 'https://fop.saj-electric.com/saj/login'
+            url = self._provider.getLoginUrl()
             payload = {
                 'lang': 'en',
                 'username': self.username,
@@ -561,9 +587,9 @@ class SAJeSolarMeterData(object):
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Cookie': 'org.springframework.web.servlet.i18n.CookieLocaleResolver.LOCALE=en; op_esolar_lang=en',
                 'DNT': '1',
-                'Host': 'fop.saj-electric.com',
-                'Origin': 'https://fop.saj-electric.com',
-                'Referer': 'https://fop.saj-electric.com/saj/login',
+                'Host': self._provider.host,
+                'Origin': self._provider.host,
+                'Referer': self._provider.getLoginUrl(),
                 'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
                 'sec-ch-ua-mobile': '?0',
                 'Sec-Fetch-Dest': 'document',
@@ -582,7 +608,7 @@ class SAJeSolarMeterData(object):
 
 
             # Get API Plant info from Esolar Portal
-            url2 = 'https://fop.saj-electric.com/saj/monitor/site/getUserPlantList'
+            url2 = f"{self._provider.getBaseUrl()}/monitor/site/getUserPlantList"
             headers = {
                 'Connection': 'keep-alive',
                 'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
@@ -592,11 +618,11 @@ class SAJeSolarMeterData(object):
                 'sec-ch-ua-mobile': '?0',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Safari/537.36',
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                'Origin': 'https://fop.saj-electric.com',
+                'Origin': self._provider.host,
                 'Sec-Fetch-Site': 'same-origin',
                 'Sec-Fetch-Mode': 'cors',
                 'Sec-Fetch-Dest': 'empty',
-                'Referer': 'https://fop.saj-electric.com/saj/monitor/home/index',
+                'Referer': f"{self._provider.getBaseUrl()}/monitor/home/index",
                 'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7'
             }
 
@@ -612,7 +638,7 @@ class SAJeSolarMeterData(object):
 
 
             # Get API Plant Solar Details
-            url3 = "https://fop.saj-electric.com/saj/monitor/site/getPlantDetailInfo"
+            url3 =  f"{self._provider.getBaseUrl()}/monitor/site/getPlantDetailInfo"
             payload3= f"plantuid={plantuid}&clientDate={clientDate}"
 
             response3 = await self._session.post(url3, headers=headers, data=payload3)
@@ -640,7 +666,7 @@ class SAJeSolarMeterData(object):
             nextChartYear = add_years(today, 1).strftime('%Y')
             chartYear = today.strftime('%Y')
             epochmilliseconds = round(int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds() * 1000))
-            url4 = f"https://fop.saj-electric.com/saj/monitor/site/getPlantDetailChart2?plantuid={plantuid}&chartDateType=1&energyType=0&clientDate={clientDate}&deviceSnArr={deviceSnArr}&chartCountType=2&previousChartDay={previousChartDay}&nextChartDay={nextChartDay}&chartDay={chartDay}&previousChartMonth={previousChartMonth}&nextChartMonth={nextChartMonth}&chartMonth={chartMonth}&previousChartYear={previousChartYear}&nextChartYear={nextChartYear}&chartYear={chartYear}&elecDevicesn=&_={epochmilliseconds}"
+            url4 = f"{self._provider.getBaseUrl()}/monitor/site/getPlantDetailChart2?plantuid={plantuid}&chartDateType=1&energyType=0&clientDate={clientDate}&deviceSnArr={deviceSnArr}&chartCountType=2&previousChartDay={previousChartDay}&nextChartDay={nextChartDay}&chartDay={chartDay}&previousChartMonth={previousChartMonth}&nextChartMonth={nextChartMonth}&chartMonth={chartMonth}&previousChartYear={previousChartYear}&nextChartYear={nextChartYear}&chartYear={chartYear}&elecDevicesn=&_={epochmilliseconds}"
             # _LOGGER.error(f"PlantCharts URL: {url4}")
             response4 = await self._session.post(url4, headers=headers)
 
@@ -656,7 +682,7 @@ class SAJeSolarMeterData(object):
             # H1 Module
             if self.sensors == "h1":
                 # getStoreOrAcDevicePowerInfo
-                url_getStoreOrAcDevicePowerInfo = f"https://fop.saj-electric.com/saj/monitor/site/getStoreOrAcDevicePowerInfo?plantuid=&devicesn={deviceSnArr}&_={epochmilliseconds}"
+                url_getStoreOrAcDevicePowerInfo = f"{self._provider.getBaseUrl()}/monitor/site/getStoreOrAcDevicePowerInfo?plantuid=&devicesn={deviceSnArr}&_={epochmilliseconds}"
 
                 response_getStoreOrAcDevicePowerInfo = await self._session.post(url_getStoreOrAcDevicePowerInfo, headers=headers)
 
@@ -681,7 +707,7 @@ class SAJeSolarMeterData(object):
             if self.sensors == "saj_sec":
 
                 # getPlantMeterModuleList
-                url_module = "https://fop.saj-electric.com/saj/cloudmonitor/plantMeterModule/getPlantMeterModuleList"
+                url_module = f"{self._provider.getBaseUrl()}/cloudmonitor/plantMeterModule/getPlantMeterModuleList"
 
                 payload_module = f"pageNo=&pageSize=&plantUid={plantuid}"
 
@@ -705,7 +731,7 @@ class SAJeSolarMeterData(object):
 
 
                 # findDevicePageList
-                url_findDevicePageList = "https://fop.saj-electric.com/saj/cloudMonitor/device/findDevicePageList"
+                url_findDevicePageList = f"{self._provider.getBaseUrl()}/cloudMonitor/device/findDevicePageList"
 
                 payload_findDevicePageList = f"officeId=1&pageNo=&pageSize=&orderName=1&orderType=2&plantuid={plantuid}&deviceStatus=&localDate={chartMonth}&localMonth={chartMonth}"
 
@@ -723,7 +749,7 @@ class SAJeSolarMeterData(object):
                 plantDetails.update(temp_findDevicePageList)
 
                 # getPlantMeterDetailInfo
-                url_getPlantMeterDetailInfo = "https://fop.saj-electric.com/saj/monitor/site/getPlantMeterDetailInfo"
+                url_getPlantMeterDetailInfo = f"{self._provider.getBaseUrl()}/monitor/site/getPlantMeterDetailInfo"
 
                 payload_getPlantMeterDetailInfo = f"plantuid={plantuid}&clientDate={clientDate}"
 
@@ -741,7 +767,7 @@ class SAJeSolarMeterData(object):
                 plantDetails.update(temp_getPlantMeterDetailInfo)
 
                 # getPlantMeterEnergyPreviewInfo
-                url_getPlantMeterEnergyPreviewInfo = f"https://fop.saj-electric.com/saj/monitor/site/getPlantMeterEnergyPreviewInfo?plantuid={plantuid}&moduleSn={moduleSn}&_={epochmilliseconds}"
+                url_getPlantMeterEnergyPreviewInfo = f"{self._provider.getBaseUrl()}/monitor/site/getPlantMeterEnergyPreviewInfo?plantuid={plantuid}&moduleSn={moduleSn}&_={epochmilliseconds}"
 
                 response_getPlantMeterEnergyPreviewInfo = await self._session.get(url_getPlantMeterEnergyPreviewInfo, headers=headers)
 
@@ -757,7 +783,7 @@ class SAJeSolarMeterData(object):
                 plantDetails.update(temp_getPlantMeterEnergyPreviewInfo)
 
                 # Get Sec Meter details
-                url_getPlantMeterChartData = f"https://fop.saj-electric.com/saj/monitor/site/getPlantMeterChartData?plantuid={plantuid}&chartDateType=1&energyType=0&clientDate={clientDate}&deviceSnArr=&chartCountType=2&previousChartDay={previousChartDay}&nextChartDay={nextChartDay}&chartDay={chartDay}&previousChartMonth={previousChartMonth}&nextChartMonth={nextChartMonth}&chartMonth={chartMonth}&previousChartYear={previousChartYear}&nextChartYear={nextChartYear}&chartYear={chartYear}&moduleSn={moduleSn}&_={epochmilliseconds}"
+                url_getPlantMeterChartData = f"{self._provider.getBaseUrl()}/monitor/site/getPlantMeterChartData?plantuid={plantuid}&chartDateType=1&energyType=0&clientDate={clientDate}&deviceSnArr=&chartCountType=2&previousChartDay={previousChartDay}&nextChartDay={nextChartDay}&chartDay={chartDay}&previousChartMonth={previousChartMonth}&nextChartMonth={nextChartMonth}&chartMonth={chartMonth}&previousChartYear={previousChartYear}&nextChartYear={nextChartYear}&chartYear={chartYear}&moduleSn={moduleSn}&_={epochmilliseconds}"
 
                 response_getPlantMeterChartData = await self._session.post(url_getPlantMeterChartData, headers=headers)
 
@@ -794,12 +820,12 @@ class SAJeSolarMeterData(object):
 
 
         # -Debug- Cookies and Data
-        _LOGGER.debug(self._session.cookie_jar.filter_cookies("https://fop.saj-electric.com"))
+        _LOGGER.debug(self._session.cookie_jar.filter_cookies(self._provider.getBaseDomain()))
         _LOGGER.debug(self._data)
 
 
         # logout session
-        url_logout = "https://fop.saj-electric.com/saj/logout"
+        url_logout =  f"{self._provider.getBaseUrl()}/logout"
         response_logout = await self._session.post(url_logout, headers=headers)
 
         if response_logout.status != 200:
