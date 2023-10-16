@@ -167,7 +167,18 @@ If you have a Saj Sec Module Add below sensor an resources:
       - totalBuyEnergy
       - totalSellEnergy # Energy -> Return to grid
 ```
+<br>
+If your inverter has been rebranded (eg. Greenheiss or Solarprofit  ), you can override the URL of the esolar portal your inverter brand uses.
 
+For example, the Greenheiss branded portal can be found at <https://inversores-style.greenheiss.com/cloud>
+
+```yaml
+  - platform: saj_esolar
+    username: aa@bb.cc
+    password: abcd1234
+    provider_domain: inversores-style.greenheiss.com
+    provider_path: cloud
+```    
 
 **Configuration variables:**
 
@@ -175,6 +186,10 @@ If you have a Saj Sec Module Add below sensor an resources:
 - **password**   (*Required*): Password used on the eSolar Portal, we advise you to save it in your secret.yaml.
 - **resources**  (*Required*): This section tells the component which values to display.
 - **sensors**    (*Optional*): saj_sec / h1 # Optional will only work with SAJ Sec Module
+- **provider_domain**    (*Optional*):  # Optional to override the domain of your eSolar provider. Defaults to fop.saj-electric.com
+- **provider_path**    (*Optional*):  # Optional when overriding the domain, overrides the url path where the sites responds. Defaults to "saj"
+- **provider_protocol**    (*Optional*): https / h1 # Optional. Defaults to https
+
 
 #
 <br><br>
