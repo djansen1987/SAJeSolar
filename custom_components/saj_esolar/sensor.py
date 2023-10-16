@@ -4,7 +4,6 @@ This Sensor will read the private api of the eSolar portal at https://fop.saj-el
 """
 
 import asyncio
-import this
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from datetime import timedelta
 import datetime
@@ -36,7 +35,6 @@ from homeassistant.const import (
 
 )
 CONF_PLANT_ID: Final = "plant_id"
-CONF_ESOLAR_PROVIDER: Final= "provider"
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
