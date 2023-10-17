@@ -5,7 +5,6 @@ This Sensor will read the private api of the eSolar portal at https://fop.saj-el
 
 import asyncio
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
-from datetime import timedelta
 import datetime
 import calendar
 
@@ -34,6 +33,7 @@ from homeassistant.const import (
     PERCENTAGE,
 
 )
+from yarl import URL
 CONF_PLANT_ID: Final = "plant_id"
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
@@ -51,12 +51,12 @@ def add_years(d, years):
     try:
         return d.replace(year = d.year + years)
     except ValueError:
-        return d + (date(d.year + years, 1, 1) - date(d.year, 1, 1))
+        return d + (datetime.date(d.year + years, 1, 1) - datetime.date(d.year, 1, 1))
 
 BASE_URL = 'https://fop.saj-electric.com/saj/login'
 _LOGGER = logging.getLogger(__name__)
 
-MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=5)
+MIN_TIME_BETWEEN_UPDATES = datetime.timedelta(minutes=5)
 
 SENSOR_PREFIX = 'esolar '
 ATTR_MEASUREMENT = "measurement"
@@ -127,7 +127,7 @@ SENSOR_LIST = {
     "solarPower",
 }
 
-SENSOR_TYPES: Final[tuple[SensorEntityDescription]] = (
+SENSOR_TYPES: Final[tuple[SensorEntityDescription, ...]] = (
     SensorEntityDescription(
         key="nowPower",
         name="nowPower",
@@ -496,11 +496,11 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_USERNAME): cv.string,
         vol.Required(CONF_PASSWORD): cv.string,
-        vol.Required(CONF_RESOURCES, default=list(SENSOR_LIST)): vol.All(
+        vol.Required(CONF_RESOURCES, default=list(SENSOR_LIST)): vol.All( # type: ignore
             cv.ensure_list, [vol.In(SENSOR_LIST)]
         ),
-        vol.Optional(CONF_SENSORS, default="None"): cv.string,
-        vol.Optional(CONF_PLANT_ID, default=0): cv.positive_int,
+        vol.Optional(CONF_SENSORS, default="None"): cv.string, # type: ignore
+        vol.Optional(CONF_PLANT_ID, default=0): cv.positive_int, # type: ignore
 
     }
 )
@@ -524,7 +524,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 class SAJeSolarMeterData(object):
     """Handle eSolar object and limit updates."""
 
-    def __init__(self, session, username, password, sensors, plant_id):
+    def __init__(self, session: aiohttp.ClientSession, username, password, sensors, plant_id):
         """Initialize the data object."""
 
         self._session = session
@@ -630,8 +630,8 @@ class SAJeSolarMeterData(object):
             plantuid = plantDetails['plantList'][self.plant_id]['plantuid']
 
             deviceSnArr = plantDetails['plantDetail']['snList'][0]
-            previousChartDay = today - timedelta(days=1)
-            nextChartDay = today + timedelta(days = 1)
+            previousChartDay = today - datetime.timedelta(days=1)
+            nextChartDay = today + datetime.timedelta(days = 1)
             chartDay = today.strftime('%Y-%m-%d')
             previousChartMonth = add_months(today,-1).strftime('%Y-%m')
             nextChartMonth = add_months(today, 1).strftime('%Y-%m')
@@ -794,7 +794,7 @@ class SAJeSolarMeterData(object):
 
 
         # -Debug- Cookies and Data
-        _LOGGER.debug(self._session.cookie_jar.filter_cookies("https://fop.saj-electric.com"))
+        _LOGGER.debug(self._session.cookie_jar.filter_cookies(URL("https://fop.saj-electric.com")))
         _LOGGER.debug(self._data)
 
 
@@ -809,7 +809,6 @@ class SAJeSolarMeterData(object):
 
         # Clear session and cookies
         self._session.cookie_jar.clear()
-        self._session.close()
 
     @property
     def latest_data(self):
@@ -833,7 +832,7 @@ class SAJeSolarMeterSensor(SensorEntity):
         self.plant_id = plant_id
         self._type = self.entity_description.key
         self._attr_icon = self.entity_description.icon
-        self._attr_name = SENSOR_PREFIX + self.entity_description.name
+        self._attr_name = f"{SENSOR_PREFIX}{self.entity_description.name}"
         self._attr_state_class = self.entity_description.state_class
         self._attr_native_unit_of_measurement = self.entity_description.native_unit_of_measurement
         self._attr_device_class = self.entity_description.device_class
@@ -857,10 +856,7 @@ class SAJeSolarMeterSensor(SensorEntity):
             if self._type == 'devOnlineNum':
                 if 'devOnlineNum' in energy['plantDetail']:
                     if energy['plantDetail']["devOnlineNum"] is not None:
-                        if int(energy['plantDetail']["devOnlineNum"]) is 0:
-                            self._state = "No"
-                        else:
-                            self._state = "Yes"
+                        self._state = "Yes" if int(energy['plantDetail']["devOnlineNum"]) else "No"
             if self._type == 'nowPower':
                 if 'nowPower' in energy['plantDetail']:
                     if energy['plantDetail']["nowPower"] is not None:
@@ -868,10 +864,7 @@ class SAJeSolarMeterSensor(SensorEntity):
             if self._type == 'runningState':
                 if 'runningState' in energy['plantDetail']:
                     if energy['plantDetail']["runningState"] is not None:
-                        if int(energy['plantDetail']["runningState"]) is 0:
-                            self._state = "No"
-                        else:
-                            self._state = "Yes"
+                        self._state = "Yes" if int(energy['plantDetail']["runningState"]) else "No"
             if self._type == 'todayElectricity':
                 if 'todayElectricity' in energy['plantDetail']:
                     if energy['plantDetail']["todayElectricity"] is not None:
@@ -1062,17 +1055,7 @@ class SAJeSolarMeterSensor(SensorEntity):
                 if self._type == 'h1Online':
                     if 'isOnline' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['isOnline'] is not None:
-                            if int(energy['storeDevicePower']["isOnline"]) is 0:
-                                self._state = "No"
-                            else:
-                                self._state = "Yes"
-                if self._type == 'h1Online':
-                    if 'isOnline' in energy["storeDevicePower"]:
-                        if energy["storeDevicePower"]['isOnline'] is not None:
-                            if int(energy['storeDevicePower']["isOnline"]) is 0:
-                                self._state = "No"
-                            else:
-                                self._state = "Yes"
+                            self._state = "Yes" if int(energy['storeDevicePower']["isOnline"]) else "No"
                 if self._type == 'outPower':
                     if 'outPower' in energy["storeDevicePower"]:
                         if energy["storeDevicePower"]['outPower'] is not None:
