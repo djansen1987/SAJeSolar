@@ -167,15 +167,56 @@ If you have a Saj Sec Module Add below sensor an resources:
       - totalBuyEnergy
       - totalSellEnergy # Energy -> Return to grid
 ```
+<br><br>
+If you are a user of Solarprofit / Greenheiss
+<br>
+_note that there is an certification issue for the greenheiss portal which is currently not accepted by Home Assistant to fix this use the provider_ssl: False_ 
 
+Add below code to you 
+```yaml
+    provider_domain: inverters.resellerdomain.ext
+    provider_path: cloud
+```
 
+for example for greenheissen:
+```yaml
+  - platform: saj_esolar #greenheissen
+    username: USERNAME
+    password: Password123
+    provider_domain: inversores-style.greenheiss.com
+    provider_path: cloud
+    provider_ssl: False
+    resources:
+      - nowPower
+      - runningState
+      - todayElectricity
+      - monthElectricity
+      - yearElectricity
+      - totalElectricity # Energy -> Solar production
+      - todayGridIncome
+      - income
+      - lastUploadTime
+      - totalPlantTreeNum
+      - totalReduceCo2
+      - isAlarm # Yes / No
+      - status
+      - plantuid
+      - currency
+      - address
+      - isOnline
+      - peakPower
+      - systemPower # Installed capacity
+```
+<br>
 **Configuration variables:**
 
-- **username**   (*Required*): E-mail address used on the eSolar Portal.
-- **password**   (*Required*): Password used on the eSolar Portal, we advise you to save it in your secret.yaml.
-- **resources**  (*Required*): This section tells the component which values to display.
-- **sensors**    (*Optional*): saj_sec / h1 # Optional will only work with SAJ Sec Module
-
+- **username**           (*Required*): E-mail address used on the eSolar Portal.
+- **password**           (*Required*): Password used on the eSolar Portal, we advise you to save it in your secret.yaml.
+- **resources**          (*Required*): This section tells the component which values to display.
+- **sensors**            (*Optional*): saj_sec / h1 # Optional will only work with SAJ Sec Module
+- **provider_domain**    (*Optional*): inverter.reseller.ext # the url of the reseller ex: inversores-style.greenheiss.com
+- **provider_path**      (*Optional*): cloud # suffix behide domain 
+- **provider_ssl**       (*Optional*): False # to bypass ssl certficate verification (not advised but needed for greenheiss.com)
 #
 <br><br>
 # **Devices**
