@@ -1,11 +1,30 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/djansen1987/)
+## **SAJ eSolar Sensor Component**<br>
+This is a Custom Component for Home-Assistant (https://home-assistant.io) reads and displays sensor values from the SAJ eSolar Portal private API.<br>
+<br>
+NOTE: This component is built upon a none public API and can change/break at any time.<br>
+Please go to the [Supported devides](#devices) part to see if your device is supported<br>
+<br>
 
-# **SAJ eSolar Sensor Component**
-This is a Custom Component for Home-Assistant (https://home-assistant.io) reads and displays sensor values from the SAJ eSolar Portal private API.
+# **🤘👩‍💻 Calling Python & REST API Enthusiasts for HA SAJ Solar!👨‍💻🤘**
 
-NOTE: This component is built upon a none public API and can change/break at any time.
-The component is built with 2 device to test with used in the Netherlands and Malaysia. Please go to the [Supported devides](#devices) part to see if your device is supported
-#
+### Do you use the SAJ solar monitoring project and have knowledge of Python scripting and REST APIs? 
+## If so, we need YOU!
+
+I created this repository for a family member but made it publicly available as I saw a wider need. Newer SAJ dongles lack local connections, making this project valuable for others. However, demand has grown, and a major change is coming with SAJ's new website i can't deal with those changes on my one.
+
+## **Challenges & Opportunities**
++ Potential API breakage: The old API will likely be discontinued with the new platform. Some retailers have already seen changes.
++ Configuration complexity: Manual configuration through configuration.yaml isn't ideal.
++ This is where your expertise comes in!
+
+We're looking for a co-author to help maintain and improve the project, particularly with the upcoming website changes. If you have Python scripting and REST API experience, we'd love to hear from you!<br>
+
+## **Join the Effort!**<br>
++ Check out the project: https://github.com/faanskit/ha-esolar (by @faanskit, who made fantastic contributions!)
++ Reach out: Email me at github@djansen.nl if you're interested in collaborating.
++ Together, let's make this project even better!
+
 <br><br>
 
 # **Installation**
