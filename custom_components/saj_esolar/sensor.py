@@ -55,6 +55,15 @@ def add_years(d, years):
 BASE_URL = 'https://fop.saj-electric.com/saj/login'
 _LOGGER = logging.getLogger(__name__)
 
+DEVICE_TYPES = {
+    "Inverter": 0,
+    "Meter": 1,  # TODO: Pending to confirm
+    "Battery": 2,
+    0: "Inverter",
+    1: "Meter",  # TODO: Pending to confirm
+    2: "Battery",
+}
+
 MIN_TIME_BETWEEN_UPDATES = datetime.timedelta(minutes=5)
 
 SENSOR_PREFIX = 'esolar '
@@ -274,7 +283,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription, ...]] = (
         icon="mdi:solar-panel",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
-    ),    
+    ),
     SensorEntityDescription(
         key="pvElec",
         name="pvElec",
@@ -504,7 +513,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional("provider_path", default="saj"):cv.string,
         vol.Optional("provider_protocol", default="https"):cv.string,
         vol.Optional("provider_ssl", default=True):cv.boolean,
-  
+
 
     }
 )
@@ -532,7 +541,7 @@ class EsolarProvider(object):
          self.host=host
          self.path=path
          self.protocol=protocol
-    
+
     def getBaseDomain(self):
         return f"{self.protocol}://{self.host}"
 
@@ -541,7 +550,7 @@ class EsolarProvider(object):
 
     def getLoginUrl(self):
         return f"{self.getBaseUrl()}/login"
-    
+
 
 
 class SAJeSolarMeterData(object):
@@ -634,7 +643,6 @@ class SAJeSolarMeterData(object):
             plantInfo = await response2.json()
             plantuid = plantInfo['plantList'][self.plant_id]['plantuid']
 
-
             # Get API Plant Solar Details
             url3 =  f"{self._provider.getBaseUrl()}/monitor/site/getPlantDetailInfo"
             payload3= f"plantuid={plantuid}&clientDate={clientDate}"
@@ -649,11 +657,33 @@ class SAJeSolarMeterData(object):
             #_LOGGER.error(f"PlantDetails: {plantDetails}")
             plantDetails.update(plantInfo)
 
+            devicesInfoUrl = f"{self._provider.getBaseUrl()}/cloudMonitor/device/findDevicePageList"
+            devicesInfoPayload = f"officeId=&pageNo=&pageSize=&orderName=1&orderType=2&plantuid={plantuid}&deviceStatus=&localDate=&localMonth="
+            deviceInfoReponse = await self._session.post(
+                devicesInfoUrl, headers=headers, data=devicesInfoPayload
+            )
+            if deviceInfoReponse.status != 200:
+                _LOGGER.error(
+                    "{deviceInfoReponse.url} returned {deviceInfoReponse.status}"
+                )
+                return
+
+            devicesInfoData = await deviceInfoReponse.json()
+            plantDetails.update(devicesInfoData)
+            if self.sensors == "h1":
+                deviceSnArr = next(
+                    (
+                        item['devicesn']
+                        for item in plantDetails["list"]
+                        if item["type"] == DEVICE_TYPES["Battery"]
+                    ),
+                    plantDetails["plantDetail"]["snList"][0],
+                )
+            else:
+                deviceSnArr = plantDetails["plantDetail"]["snList"][0]
+
 
             # getPlantDetailChart2
-            plantuid = plantDetails['plantList'][self.plant_id]['plantuid']
-
-            deviceSnArr = plantDetails['plantDetail']['snList'][0]
             previousChartDay = today - datetime.timedelta(days=1)
             nextChartDay = today + datetime.timedelta(days = 1)
             chartDay = today.strftime('%Y-%m-%d')
@@ -726,7 +756,6 @@ class SAJeSolarMeterData(object):
 
                 # -Debug- Sec module serial number
                 _LOGGER.debug(moduleSn)
-
 
                 # findDevicePageList
                 url_findDevicePageList = f"{self._provider.getBaseUrl()}/cloudMonitor/device/findDevicePageList"
