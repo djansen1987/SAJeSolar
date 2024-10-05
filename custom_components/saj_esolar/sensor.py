@@ -141,7 +141,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription, ...]] = (
         name="nowPower",
         icon="mdi:solar-power",
         native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
+        device_class=SensorDeviceClass.ENERGY,
     ),
     SensorEntityDescription(
         key="runningState",
@@ -275,14 +275,14 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription, ...]] = (
         name="peakPower",
         icon="mdi:solar-panel",
         native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
+        device_class=SensorDeviceClass.ENERGY,
     ),
     SensorEntityDescription(
         key="systemPower",
         name="systemPower",
         icon="mdi:solar-panel",
         native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
+        device_class=SensorDeviceClass.ENERGY,
     ),
     SensorEntityDescription(
         key="pvElec",
@@ -370,7 +370,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription, ...]] = (
         name="totalLoadPower",
         icon="mdi:solar-panel",
         native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
+        device_class=SensorDeviceClass.ENERGY,
     ),
     SensorEntityDescription(
         key="totalPvgenPower",
