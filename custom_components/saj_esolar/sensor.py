@@ -1207,7 +1207,7 @@ class SAJeSolarMeterSensor(SensorEntity):
                 if self._type == 'totalLoadPower':
                     if 'dataCountList' in energy:
                         if energy["getPlantMeterChartData"]['dataCountList'][4][-1] is not None:
-                            self._state = float(energy["getPlantMeterChartData"]['dataCountList'][2][-1])
+                            self._state = float(energy["getPlantMeterChartData"]['dataCountList'][1][-1])
                 if self._type == 'totalPvgenPower':
                     if 'dataCountList' in energy:
                         if energy["getPlantMeterChartData"]['dataCountList'][4][-1] is not None:
