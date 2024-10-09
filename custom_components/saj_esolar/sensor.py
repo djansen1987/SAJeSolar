@@ -109,9 +109,15 @@ SENSOR_LIST = {
     "selfConsumedEnergy2",
     "plantTreeNum",
     "reduceCo2",
+    #deprecated entities (values dont actually match what they meant to )
     "totalGridPower",
     "totalLoadPower",
     "totalPvgenPower",
+    #new saj entities
+    "gridLoadPower",
+    "solarLoadPower",
+    "homeLoadPower",
+    "exportPower",
     "totalPvEnergy",
     "totalLoadEnergy",
     "totalBuyEnergy",
@@ -376,6 +382,31 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription, ...]] = (
         key="totalPvgenPower",
         name="totalPvgenPower",
         icon="mdi:solar-panel",
+        native_unit_of_measurement=UnitOfPower.WATT,
+    ),
+    SensorEntityDescription(
+        key="gridLoadPower",
+        name="gridLoadPower",
+        icon="mdi:transmission-tower-import",
+        native_unit_of_measurement=UnitOfPower.WATT,
+    ),
+    SensorEntityDescription(
+        key="solarLoadPower",
+        name="solarLoadPower",
+        icon="mdi:solar-power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.ENERGY,
+    ),
+    SensorEntityDescription(
+        key="homeLoadPower",
+        name="homeLoadPower",
+        icon="mdi:home-lightning-bolt-outline",
+        native_unit_of_measurement=UnitOfPower.WATT,
+    ),
+    SensorEntityDescription(
+        key="exportPower",
+        name="exportPower",
+        icon="mdi:transmission-tower-export",
         native_unit_of_measurement=UnitOfPower.WATT,
     ),
     SensorEntityDescription(
@@ -1199,20 +1230,37 @@ class SAJeSolarMeterSensor(SensorEntity):
                             self._state = (energy["getPlantMeterChartData"]['viewBean']["plantTreeNum"])
 
 
-                # dataCountList
+                # dataCountList, deprecated since use the wrong columns
                 if self._type == 'totalGridPower':
                     if 'dataCountList' in energy:
-                        if energy["getPlantMeterChartData"]['dataCountList'][4][-1] is not None:
+                        if energy["getPlantMeterChartData"]['dataCountList'][3][-1] is not None:
                             self._state = float(energy["getPlantMeterChartData"]['dataCountList'][3][-1])
                 if self._type == 'totalLoadPower':
                     if 'dataCountList' in energy:
-                        if energy["getPlantMeterChartData"]['dataCountList'][4][-1] is not None:
+                        if energy["getPlantMeterChartData"]['dataCountList'][2][-1] is not None:
                             self._state = float(energy["getPlantMeterChartData"]['dataCountList'][2][-1])
                 if self._type == 'totalPvgenPower':
                     if 'dataCountList' in energy:
                         if energy["getPlantMeterChartData"]['dataCountList'][4][-1] is not None:
                             self._state = float(energy["getPlantMeterChartData"]['dataCountList'][4][-1])
 
+                #dataCountList, new entities
+                if self._type == 'homeLoadPower':
+                    if 'dataCountList' in energy:
+                        if energy["getPlantMeterChartData"]['dataCountList'][1][-1] is not None:
+                            self._state = float(energy["getPlantMeterChartData"]['dataCountList'][1][-1])
+                if self._type == 'solarLoadPower':
+                    if 'dataCountList' in energy:
+                        if energy["getPlantMeterChartData"]['dataCountList'][2][-1] is not None:
+                            self._state = float(energy["getPlantMeterChartData"]['dataCountList'][2][-1])
+                if self._type == 'exportPower':
+                    if 'dataCountList' in energy:
+                        if energy["getPlantMeterChartData"]['dataCountList'][3][-1] is not None:
+                            self._state = float(energy["getPlantMeterChartData"]['dataCountList'][3][-1])
+                if self._type == 'gridLoadPower':
+                    if 'dataCountList' in energy:
+                        if energy["getPlantMeterChartData"]['dataCountList'][4][-1] is not None:
+                            self._state = float(energy["getPlantMeterChartData"]['dataCountList'][4][-1])
 
                 # getPlantMeterDetailInfo
                 if self._type == 'totalPvEnergy':
