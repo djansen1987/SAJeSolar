@@ -178,13 +178,19 @@ If you have a Saj Sec Module Add below sensor an resources:
       - selfConsumedEnergy2
       - plantTreeNum
       - reduceCo2
-      - totalGridPower
-      - totalLoadPower
-      - totalPvgenPower
       - totalPvEnergy
       - totalLoadEnergy # Energy -> Grid consumption
       - totalBuyEnergy
       - totalSellEnergy # Energy -> Return to grid
+      #these entities are deprecated since they return incorrect values
+      - totalGridPower  # Power being exported to the grid
+      - totalLoadPower  # Solar power being currently self-consumed 
+      - totalPvgenPower # Power imported from the grid
+      #these new entities replace them
+      - gridLoadPower   # Power imported from the grid
+      - solarLoadPower  # Solar power being currently self-consumed 
+      - homeLoadPower   # Total power being consumed by the plant (the home)
+      - exportPower     # Power being exported to the grid
 ```
 <br><br>
 If you are a user of Solarprofit / Greenheiss
