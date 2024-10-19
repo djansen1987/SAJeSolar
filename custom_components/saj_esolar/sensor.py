@@ -725,7 +725,8 @@ class SAJeSolarMeterData(object):
             nextChartYear = add_years(today, 1).strftime('%Y')
             chartYear = today.strftime('%Y')
             epochmilliseconds = round(int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds() * 1000))
-            url4 = f"{self._provider.getBaseUrl()}/monitor/site/getPlantDetailChart2?plantuid={plantuid}&chartDateType=1&energyType=0&clientDate={clientDate}&deviceSnArr={deviceSnArr}&chartCountType=2&previousChartDay={previousChartDay}&nextChartDay={nextChartDay}&chartDay={chartDay}&previousChartMonth={previousChartMonth}&nextChartMonth={nextChartMonth}&chartMonth={chartMonth}&previousChartYear={previousChartYear}&nextChartYear={nextChartYear}&chartYear={chartYear}&elecDevicesn={deviceSnArr}&_={epochmilliseconds}"
+            elecDevicesn = deviceSnArr if self.sensors == "h1" else ""
+            url4 = f"{self._provider.getBaseUrl()}/monitor/site/getPlantDetailChart2?plantuid={plantuid}&chartDateType=1&energyType=0&clientDate={clientDate}&deviceSnArr={deviceSnArr}&chartCountType=2&previousChartDay={previousChartDay}&nextChartDay={nextChartDay}&chartDay={chartDay}&previousChartMonth={previousChartMonth}&nextChartMonth={nextChartMonth}&chartMonth={chartMonth}&previousChartYear={previousChartYear}&nextChartYear={nextChartYear}&chartYear={chartYear}&elecDevicesn={elecDevicesn}&_={epochmilliseconds}"
             # _LOGGER.error(f"PlantCharts URL: {url4}")
             response4 = await self._session.post(url4, headers=headers)
 
