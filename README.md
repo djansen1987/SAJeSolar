@@ -1,3 +1,8 @@
+# !! Important !! **SAJ will change their portal this month to the new portal. This will probably break this integration. If someone is willing to provide fixed code this is welcome, but I do not own an SAJ product anymore and therefor cannot test.**
+My advice would be to switch over to local connection via this HACS integration: https://github.com/wimb0/home-assistant-saj-r5-modbus
+<br><br>
+<br><br>
+<br><br>
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/djansen1987/)
 ## **SAJ eSolar Sensor Component**<br>
 This is a Custom Component for Home-Assistant (https://home-assistant.io) reads and displays sensor values from the SAJ eSolar Portal private API.<br>
