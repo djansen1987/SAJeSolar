@@ -1,8 +1,10 @@
-# ESolar Greenheiss
+# SAJ ESolar
+
+**NOTE**: If you own a H1. I would appreciate some testing.
+
+Integration for the SAJ ESolar solar monitoring portal. It scraps the ESolar platform to bring your solar energy monitoring into Home Assistant.
 
 This Home-Assistant (https://home-assistant.io) integration is a modification of the original from https://github.com/djansen1987/SAJeSolar. The reason for a fork is that SAJ has treated differently their official clients and clients of rebranded hardware (like Greenheiss). People with SAJ Branded hardware have been migrated to the "Elekeeper" platform leaving people with rebranded hardware in the legacy platform.
-
-**NOTE:** This integration was heavily refactored and has been tested only by me. I dont have access to all supported hardware and little experience on this, so I would not consider this  stable yet.
 
 If your monitoring portal is one of the following, this integration most likely will work for you:
  - Peimar: https://peimar-portal.saj-electric.com
@@ -12,6 +14,8 @@ If your monitoring portal is one of the following, this integration most likely 
  They are all basically the same portal with a different branding (credentials even work in any of them). If you know of a different one not listed here, please let me know.
 
 If your inverter is branded as SAJ and your monitoring site is 'Elekeeper', this wont probably work.  check https://github.com/erelke/ha-esolar Instead
+
+**NOTE:** This integration was heavily refactored and has been tested only by me. I own a R5 inverter with a SEC Module and I dont have access to an H1 inverter. While I expect for it to work still for the H1, I make no promises until someone with the hardware can confirm it to me.
 
 
 ## **Notice**<br>
@@ -23,9 +27,9 @@ As such, it is safe to assume this might break at any moment. That warning aside
 # **Installation**
 
 ### **Manual**
-- Copy directory `custom_components/esolar_greenheiss` to your `<config dir>/custom_components` directory.
+- Copy directory `custom_components/saj_esolar` to your `<config dir>/custom_components` directory.
 - Restart Home Assistant
-- Add an Integration and look for ESolar Greenheiss. Then follow the configuration steps.
+- Add an Integration and look for SAJ ESolar. Then follow the configuration steps.
 
 # **Configuration**
 - Go to Integrations and click "Add Integration"
@@ -42,27 +46,23 @@ As such, it is safe to assume this might break at any moment. That warning aside
    - **Use SSL**: for using https (I see no reason to uncheck this, but maybe there is one)
    - **Verify SSL**: Uncheck if your provider certificate is failing for HASS (Grenheiss.com certificate seems to be not trusted by HASS)
 
-### **Migrating from saj_esolar**
+### **Migrating from https://github.com/djansen1987/SAJeSolar**
 
- Note that this integration wont automatically import yaml files.
+This integration is a dropin replacement for the original. It should import your YAML configuration and create a new config entry in Home Assistant. Once that happen, you can delete the YAML entry from your configuration.
 
-If you want to migrate from the original integration do the following:
- - Remove all configuration for the integration in your yaml files. Do not erase any entitiy
- - Install this integration into your HASS instance
- - Restart your instance
- - Setup the configuration. This integration's entities are named the same as the original so as long as you removed the original one before setting up this one, they should be 'adopted'.
 
  #### Notes on migrating
 
-  - The migration is not exactly 1:1. I did some cleanup like replacing some entities that returned 'Y' or 'YES' into proper booleans. I also removed a couple of deprecated entities.
-  - It is not longer possible to choose which entities you want. You'll get all entities available for the chosen hardware. I might allow to configure this in the future but for now it proved to difficult for me.
-  - I removed a couple of entities considered deprecated because they were originally wrong.
+  - I recommend you make a full backup before switching.
+  - This fork is not provide an exactly 1:1 compatibility. I did some cleanup like replacing some entities that returned 'Y' or 'YES' into proper booleans. 
+  - I removed the following power-related deprecated entities: _totalGridPower_, _totalLoadPower_ and _totalPvgenPower_. They reported wrong values in the original integration.  This change should not break your energy dashboard (but might affect integrations you might have)
+  - It is not longer possible to choose which entities you want. You'll get all entities available for the chosen hardware. Feel free to disable the ones you don't need in the HASS UI.
 
 
 ### **Supported Entities**
 Based on which hardware you have, you might have a different set of entities. For example, the SEC module is commonly used with R5 inverters which do not support batteries
 
-#### Common Sensors
+#### Sensors common for H1 and SEC Module
 
     nowPower
     runningState
