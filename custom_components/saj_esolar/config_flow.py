@@ -1,4 +1,4 @@
-"""Config flow for eSolar Greenheiss integration."""
+"""Config flow for SAJ ESolar integration."""
 
 import logging
 
@@ -17,6 +17,7 @@ from .api import (
     EsolarProvider,
 )
 from .const import (
+    CONF_LEGACY_VERIFY_SSL,
     CONF_PASSWORD,
     CONF_PLANT_ID,
     CONF_PROVIDER_DOMAIN,
@@ -37,7 +38,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class EsolarGreenheissFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for eSolar Greenheiss."""
+    """Handle a config flow for SAJ ESolar."""
 
     VERSION = 1
 
@@ -128,7 +129,6 @@ class EsolarGreenheissFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_reauth(self, user_input=None):
         """Handle re-authentication of an existing config entry."""
-        _LOGGER.debug("Initiating reauth flow")
         errors = {}
         entry_id = self.context.get("entry_id")
         entry = self.hass.config_entries.async_get_entry(entry_id)
@@ -195,27 +195,24 @@ class EsolarGreenheissFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(uuid)
         self._abort_if_unique_id_configured()
 
-        data = (
-            {
-                CONF_USERNAME: import_config[CONF_USERNAME],
-                CONF_PASSWORD: import_config[CONF_PASSWORD],
-                CONF_PLANT_ID: import_config.get(CONF_PLANT_ID, 0),
-                CONF_SENSORS: import_config.get(CONF_SENSORS, SENSOR_CHOICES[1]),
-                CONF_PROVIDER_DOMAIN: import_config.get(
-                    CONF_PROVIDER_DOMAIN, DEFAULT_PROVIDER_DOMAIN
-                ),
-                CONF_PROVIDER_PATH: import_config.get(
-                    CONF_PROVIDER_PATH, DEFAULT_PROVIDER_PATH
-                ),
-                CONF_PROVIDER_USE_SSL: import_config.get(CONF_PROVIDER_USE_SSL, True),
-                # migrate the old provider_ssl property to a better named property
-                CONF_PROVIDER_VERIFY_SSL: import_config.get("provider_ssl", True),
-            },
-        )
-        _LOGGER.info("Imported configuration from saj_esolar YAML: %s", data)
+        data = {
+            CONF_USERNAME: import_config[CONF_USERNAME],
+            CONF_PASSWORD: import_config[CONF_PASSWORD],
+            CONF_PLANT_ID: import_config.get(CONF_PLANT_ID, 0),
+            CONF_SENSORS: import_config.get(CONF_SENSORS, SENSOR_CHOICES[1]),
+            CONF_PROVIDER_DOMAIN: import_config.get(
+                CONF_PROVIDER_DOMAIN, DEFAULT_PROVIDER_DOMAIN
+            ),
+            CONF_PROVIDER_PATH: import_config.get(
+                CONF_PROVIDER_PATH, DEFAULT_PROVIDER_PATH
+            ),
+            CONF_PROVIDER_USE_SSL: import_config.get(CONF_PROVIDER_USE_SSL, True),
+            # migrate the old provider_ssl property to a better named property
+            CONF_PROVIDER_VERIFY_SSL: import_config.get(CONF_LEGACY_VERIFY_SSL, True),
+        }
         return self.async_create_entry(
             title=uuid,
-            data=import_config,
+            data=data,
         )
 
     def _getId(self, dictionary) -> str:

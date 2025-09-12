@@ -8,10 +8,10 @@ from ssl import SSLCertVerificationError
 import aiohttp
 
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
-from .const import DEVICE_TYPES, DOMAIN
+from .const import DEVICE_TYPES
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 """Sensor class for the esolar entities.
 
-This Sensor will read the private api of the eSolar portal at https://inversores-style.greenheiss.com
+This Sensor will read the private api of the eSolar portal at https://greenheiss-portal.saj-electric.com
 """
 
 from collections.abc import Callable
@@ -19,11 +19,11 @@ from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
+    CONF_LEGACY_VERIFY_SSL,
     CONF_PASSWORD,
     CONF_PROVIDER_DOMAIN,
     CONF_PROVIDER_PATH,
     CONF_PROVIDER_USE_SSL,
-    CONF_PROVIDER_VERIFY_SSL,
     CONF_RESOURCES,
     CONF_USERNAME,
     DOMAIN,
@@ -67,7 +67,7 @@ PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_PROVIDER_DOMAIN, default="fop.saj-electric.com"): cv.string,
         vol.Optional(CONF_PROVIDER_PATH, default="saj"): cv.string,
         vol.Optional(CONF_PROVIDER_USE_SSL, default="True"): cv.boolean,
-        vol.Optional("provider_ssl", default=True): cv.boolean,
+        vol.Optional(CONF_LEGACY_VERIFY_SSL, default=True): cv.boolean,
     }
 )
 

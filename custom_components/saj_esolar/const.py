@@ -1,4 +1,4 @@
-"""Constants for the eSolar Greenheiss integration."""
+"""Constants for the SAJ Esolar integration."""
 
 from typing import Final
 
@@ -20,6 +20,7 @@ CONF_PROVIDER_DOMAIN = "provider_domain"
 CONF_PROVIDER_PATH = "provider_path"
 CONF_PROVIDER_USE_SSL = "provider_use_ssl"
 CONF_PROVIDER_VERIFY_SSL = "provider_verify_ssl"
+CONF_LEGACY_VERIFY_SSL = "provider_ssl"
 CONF_RESOURCES = "resources"
 
 DEVICE_TYPES = {
