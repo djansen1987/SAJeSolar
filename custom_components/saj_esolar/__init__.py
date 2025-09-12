@@ -1,2 +1,0 @@
-"""The SAJ eSolar component."""
-

@@ -1,0 +1,49 @@
+{
+  "title": "SAJ ESolar",
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "username": "Username",
+          "password": "Password",
+          "sensors": "Monitoring Hardware"
+        },
+        "sections": {
+          "advanced": {
+            "name": "Advanced Options",
+            "data": {
+              "provider_domain": "Reseller Domain (without protocol)",
+              "provider_path": "Reseller Path (The string after the domain)",
+              "plant_id": "Plant ID",
+              "provider_use_ssl": "Use HTTPS",
+              "provider_verify_ssl": "Verify SSL (Greenheiss users might need to uncheck this)"
+            }
+          }
+        },
+        "description": "Please enter the connection details."
+      },
+      "reauth": {
+        "title": "Reauthenticate Integration",
+        "description": "The current credentials have been rejected. Please re-enter them."
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid username or password",
+      "api_error": "Unable to connect to the API",
+      "unknown_problem": "An unexpected error occurred",
+      "SSL Certificate error": "SSL Certificate error."
+    },
+    "abort": {
+      "already_configured": "This integration is already configured.",
+      "reauth_successful": "Reauthentication was successful"
+    }
+  },
+  "selector": {
+    "sensors": {
+      "options": {
+        "h1": "H1 Inverter",
+        "saj_sec": "eSolar SEC Module"
+      }
+    }
+  }
+}
