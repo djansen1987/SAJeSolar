@@ -246,7 +246,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription, ...]] = (
         key="systemPower",
         name="systemPower",
         icon="mdi:solar-panel",
-        native_unit_of_measurement=UnitOfPower.WATT,
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
