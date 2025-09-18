@@ -145,7 +145,7 @@ class EsolarGreenheissFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 config = ESolarConfiguration(
                     new_data[CONF_USERNAME],
                     new_data[CONF_PASSWORD],
-                    [],
+                    SENSOR_CHOICES[-1],
                     0,
                     provider,
                 )
@@ -166,7 +166,7 @@ class EsolarGreenheissFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 new_data = {**entry.data, **user_input}
                 self.hass.config_entries.async_update_entry(entry, data=new_data)
                 # reload
-                await self.hass.config_entries.async_reload(self._entry.entry_id)
+                await self.hass.config_entries.async_reload(entry_id)
                 return self.async_abort(reason="reauth_successful")
 
         # only password. changing username would likely break energy dashboard
