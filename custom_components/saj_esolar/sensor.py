@@ -164,6 +164,8 @@ class SAJeSolarMeterSensor(CoordinatorEntity, SensorEntity):
 
         # -Debug- adding sensor
         _LOGGER.debug("Device: %s , State %s", self._type, self._state)
+        if self._state is None:
+            _LOGGER.warn("Status of entity could not be found: %s",self._type)
         return self._state
 
     def match_basic_cases(self, energy: dict):
@@ -384,25 +386,13 @@ class SAJeSolarMeterSensor(CoordinatorEntity, SensorEntity):
                     _toPercentage,
                 )
             case "homeLoadPower":
-                value = energy.get("getPlantMeterChartData", {}).get(
-                    "dataCountList", {}
-                )[1][-1]
-                self._state = float(value) if value is not None else None
+                self._state = _get_value_meter_chart(energy,1)
             case "solarLoadPower":
-                value = energy.get("getPlantMeterChartData", {}).get(
-                    "dataCountList", {}
-                )[2][-1]
-                self._state = float(value) if value is not None else None
+                self._state = _get_value_meter_chart(energy,2)
             case "exportPower":
-                value = energy.get("getPlantMeterChartData", {}).get(
-                    "dataCountList", {}
-                )[3][-1]
-                self._state = float(value) if value is not None else None
+                self._state = _get_value_meter_chart(energy,3)
             case "gridLoadPower":
-                value = energy.get("getPlantMeterChartData", {}).get(
-                    "dataCountList", {}
-                )[4][-1]
-                self._state = float(value) if value is not None else None
+                self._state =_get_value_meter_chart(energy,4)
             # getPlantMeterDetailInfo
             case "selfUseRate":
                 self._state = _get_value_from_deep(
@@ -422,6 +412,16 @@ class SAJeSolarMeterSensor(CoordinatorEntity, SensorEntity):
                     float,
                 )
 
+def _get_value_meter_chart(data: dict, index: int):
+    data_count_list = data.get("getPlantMeterChartData", {}).get("dataCountList", {} )
+
+    # Safely extract the value
+    value = None
+    if len(data_count_list) > index:               
+        entry = data_count_list[index]
+        if isinstance(entry, list) and entry:  
+            value = entry[-1]
+    return float(value) if value is not None else None
 
 def _get_value_from_deep(
     dictionary: dict, keys: list[str], lambda_funct: Callable[[Any], Any] = lambda x: x
@@ -430,6 +430,10 @@ def _get_value_from_deep(
 
     Receives a lambda to transform the value to the right type.
     """
+    current = dictionary
     for key in keys:
-        dictionary = dictionary.get(key, {})
-    return lambda_funct(dictionary) if dictionary else None
+        if isinstance(current, dict) and key in current:
+            current = current[key]
+        else:
+            return None
+    return lambda_funct(current)

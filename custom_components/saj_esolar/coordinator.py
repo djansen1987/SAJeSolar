@@ -39,3 +39,7 @@ class EsolarDataUpdateCoordinator(DataUpdateCoordinator):
             raise ConfigEntryAuthFailed from err
         except ApiError as err:
             raise UpdateFailed("Error communicating with API") from err
+        except Exception as err:
+            raise UpdateFailed("Unknown Error. Please see logs") from err
+        
+
