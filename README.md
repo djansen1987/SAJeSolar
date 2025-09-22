@@ -4,19 +4,20 @@
 
 Integration for the SAJ ESolar solar monitoring portal. It scraps the ESolar platform to bring your solar energy monitoring into Home Assistant.
 
-This Home-Assistant (https://home-assistant.io) integration is a modification of the original from https://github.com/djansen1987/SAJeSolar. The reason for a fork is that SAJ has treated differently their official clients and clients of rebranded hardware (like Greenheiss). People with SAJ Branded hardware have been migrated to the "Elekeeper" platform leaving people with rebranded hardware in the legacy platform.
+This Home-Assistant (https://home-assistant.io) integration originally served all users of SAJ solar installation (including rebranded hardware). Recently people with SAJ Branded hardware has been migrated to the "Elekeeper" platform leaving people with rebranded hardware in the legacy platform. This integration aims to keep working for people in the legacy platform.
+
+Some known brands that use this portal are GreenHeiss (mostly for the spanish market), Peimar and some users of SolarProfit (the company seems to have used several different tools)
 
 If your monitoring portal is one of the following, this integration most likely will work for you:
  - Peimar: https://peimar-portal.saj-electric.com
  - GreenHeiss: https://inversores-style.greenheiss.com (which is a CNAME for https://greenheiss-portal.saj-electric.com)
  - SolarProfit: https://inversor.saj-electric.com/
 
- They are all basically the same portal with a different branding (credentials even work in any of them). If you know of a different one not listed here, please let me know.
+ They are all basically the same portal with a different branding (credentials even work in any of them interchangeably). If you know of a different one not listed here, please let me know.
 
-If your inverter is branded as SAJ and your monitoring site is 'Elekeeper', this wont probably work.  check https://github.com/erelke/ha-esolar Instead
+If your inverter is branded as SAJ and your monitoring site is 'Elekeeper', this wont probably work. Check https://github.com/erelke/ha-esolar Instead
 
-**NOTE:** This integration was heavily refactored and has been tested only by me. I own a R5 inverter with a SEC Module and I dont have access to an H1 inverter. While I expect for it to work still for the H1, I make no promises until someone with the hardware can confirm it to me.
-
+**NOTE:** Version 1.6.0 was heavily refactored and has been tested only by me. I own a R5 inverter with a SEC Module and I dont have access to an H1 inverter. While I expect for it to work still for the H1, I make no promises until someone with the hardware can confirm it to me.
 
 ## **Notice**<br>
 SAJ does not offer an official API for their legacy eSolar platform. This integration works by mimicking the requests done by their monitoring website and generating home assistant entities based on them.
