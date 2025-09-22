@@ -1,11 +1,17 @@
 {
   "domain": "saj_esolar",
-  "name": "SAJ eSolar",
-  "version": "1.5.7",
+  "name": "SAJ esolar Portal",
+  "version": "1.6.0",
   "requirements": [],
   "dependencies": [],
-  "issue_tracker": "https://github.com/djansen1987/SAJeSolar/issues",
-  "documentation": "https://github.com/djansen1987/SAJeSolar/",
-  "codeowners": ["@djansen1987"],
-  "iot_class": "cloud_polling"
+  "issue_tracker": "https://github.com/santiagozky/SAJeSolar/issues",
+  "documentation": "https://github.com/santiagozky/SAJeSolar/",
+  "codeowners": ["@santiagozky"],
+  "homeassistant": "2024.6.0",
+  "iot_class": "cloud_polling",
+  "integration_type": "hub",
+  "config_flow": true,
+  "frontend": {
+    "icon": "mdi:solar-power"
+  }
 }

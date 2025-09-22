@@ -1,261 +1,145 @@
-# !! Important !! **SAJ will change their portal this month to the new portal. This will probably break this integration. If someone is willing to provide fixed code this is welcome, but I do not own an SAJ product anymore and therefor cannot test.**
-My advice would be to switch over to local connection via this HACS integration: https://github.com/wimb0/home-assistant-saj-r5-modbus
-<br><br>
-<br><br>
-<br><br>
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/djansen1987/)
-## **SAJ eSolar Sensor Component**<br>
-This is a Custom Component for Home-Assistant (https://home-assistant.io) reads and displays sensor values from the SAJ eSolar Portal private API.<br>
-<br>
-NOTE: This component is built upon a none public API and can change/break at any time.<br>
-Please go to the [Supported devides](#devices) part to see if your device is supported<br>
-<br>
+# SAJ ESolar
 
-# **👩‍💻 Python & REST API Enthusiasts for HA SAJ Solar!👨‍💻**
+**NOTE**: If you own a H1. I would appreciate some testing.
 
-### Do you use the SAJ solar monitoring project and have knowledge of Python scripting and REST APIs? 
-## If so, we need YOU!
+Integration for the SAJ ESolar solar monitoring portal. It scraps the ESolar platform to bring your solar energy monitoring into Home Assistant.
 
-I created this repository for a family member but made it publicly available as I saw a wider need. Newer SAJ dongles lack local connections, making this project valuable for others. However, demand has grown, and a major change is coming with SAJ's new website i can't deal with those changes on my own.
+This Home-Assistant (https://home-assistant.io) integration is a modification of the original from https://github.com/djansen1987/SAJeSolar. The reason for a fork is that SAJ has treated differently their official clients and clients of rebranded hardware (like Greenheiss). People with SAJ Branded hardware have been migrated to the "Elekeeper" platform leaving people with rebranded hardware in the legacy platform.
 
-## **Challenges & Opportunities**
-+ Potential API breakage: The old API will likely be discontinued with the new platform. Some retailers have already seen changes.
-+ Configuration complexity: Manual configuration through configuration.yaml isn't ideal.
+If your monitoring portal is one of the following, this integration most likely will work for you:
+ - Peimar: https://peimar-portal.saj-electric.com
+ - GreenHeiss: https://inversores-style.greenheiss.com (which is a CNAME for https://greenheiss-portal.saj-electric.com)
+ - SolarProfit: https://inversor.saj-electric.com/
 
-This is where your expertise comes in!
+ They are all basically the same portal with a different branding (credentials even work in any of them). If you know of a different one not listed here, please let me know.
 
-We're looking for a co-author to help maintain and improve the project, particularly with the upcoming website changes. If you have Python scripting and REST API experience, we'd love to hear from you!<br>
+If your inverter is branded as SAJ and your monitoring site is 'Elekeeper', this wont probably work.  check https://github.com/erelke/ha-esolar Instead
 
-## **Join the Effort!**<br>
-+ Check out this project for inspiration: https://github.com/faanskit/ha-esolar (by @faanskit, who made fantastic contributions!)
-+ Create pull request to help the project
-+ Reach out: Email me at github@djansen.nl if you're interested in collaborating.
+**NOTE:** This integration was heavily refactored and has been tested only by me. I own a R5 inverter with a SEC Module and I dont have access to an H1 inverter. While I expect for it to work still for the H1, I make no promises until someone with the hardware can confirm it to me.
 
-Together, let's make this project even better!
 
-<br><br>
+## **Notice**<br>
+SAJ does not offer an official API for their legacy eSolar platform. This integration works by mimicking the requests done by their monitoring website and generating home assistant entities based on them.
+
+As such, it is safe to assume this might break at any moment. That warning aside, the platform is quite legacy and hasnt really seen any change in several years.
+
 
 # **Installation**
 
-### **HACS - Recommended**
-- Have [HACS](https://hacs.xyz) installed, this will allow you to easily manage and track updates.
-- Search for 'SAJ eSolar'.
-- Click Install below the found integration.
-- Configure using the configuration instructions below.
-- Restart Home-Assistant.
-#
 ### **Manual**
 - Copy directory `custom_components/saj_esolar` to your `<config dir>/custom_components` directory.
-- Configure with config below.
-- Restart Home-Assistant.
-#
+- Restart Home Assistant
+- Add an Integration and look for SAJ ESolar. Then follow the configuration steps.
 
-##### **Note when updating from v1.0.0.4**
-##### - resources are renamed in de configuration, replace old ones. applies when updating v1.0.0.4 -> 1.0.0.5
-#
-<br><br>
+# **Configuration**
+- Go to Integrations and click "Add Integration"
+- Look up for esolar Greenheiss and select it
+- Fill out the following fields:
+   - **Username & password**: Pretty self-explanatory
+   - **Provider Domain**: The domain of your monitoring site. The default greenheiss one should work, but you can use your brand's domain if needed.
+     
+     If you change that, make sure to review the advanced section!
+   - **Monitoring Hardware**: This integration currently should support the SEC Monitoring Module and the H1 Inverter. Choose the one you have. (AFAIK you cannot use both)
+   - **Provider Path**: The path part of the URL used by your provider's site. Check your monitoring site  to verify it. 
+     - Greenheiss uses _cloud_: https://greenheiss-portal.saj-electric.com/cloud
+     - Peimar uses _portal_: https://peimar-portal.saj-electric.com/portal
+   - **Use SSL**: for using https (I see no reason to uncheck this, but maybe there is one)
+   - **Verify SSL**: Uncheck if your provider certificate is failing for HASS (Grenheiss.com certificate seems to be not trusted by HASS)
 
-# **Usage**
-To use this component in your installation, add the following to your `configuration.yaml` file:
+### **Migrating from https://github.com/djansen1987/SAJeSolar**
 
-```yaml
-# Example configuration.yaml entry
+This integration is a dropin replacement for the original. It should import your YAML configuration and create a new config entry in Home Assistant. Once that happen, you can delete the YAML entry from your configuration.
 
-sensor:
-  - platform: saj_esolar
-    username: aa@bb.cc
-    password: abcd1234
-    plant_id: 0 # Default is 0. Typically ordered in the same way as they are listed in the eSolar app
-    resources:
-      - nowPower
-      - runningState
-      - todayElectricity
-      - monthElectricity
-      - yearElectricity
-      - totalElectricity # Energy -> Solar production
-      - todayGridIncome
-      - income
-      - lastUploadTime
-      - totalPlantTreeNum
-      - totalReduceCo2
-      - status
-      - plantuid
-      - currency
-      - address
-      - isOnline
-      - peakPower
-      - systemPower # Installed capacity
-```
+
+ #### Notes on migrating
+
+  - I recommend you make a full backup before switching.
+  - This fork is not provide an exactly 1:1 compatibility. I did some cleanup like replacing some entities that returned 'Y' or 'YES' into proper booleans. 
+  - I removed the following power-related deprecated entities: _totalGridPower_, _totalLoadPower_ and _totalPvgenPower_. They reported wrong values in the original integration.  This change should not break your energy dashboard (but might affect integrations you might have)
+  - It is not longer possible to choose which entities you want. You'll get all entities available for the chosen hardware. Feel free to disable the ones you don't need in the HASS UI.
+
+
+### **Supported Entities**
+Based on which hardware you have, you might have a different set of entities. For example, the SEC module is commonly used with R5 inverters which do not support batteries
+
+#### Sensors common for H1 and SEC Module
+
+    nowPower
+    runningState
+    devOnlineNum
+    todayElectricity
+    monthElectricity
+    yearElectricity
+    totalElectricity
+    todayGridIncome
+    income
+    lastUploadTime
+    totalPlantTreeNum
+    totalReduceCo2
+    plantuid
+    plantname
+    currency
+    address
+    isOnline
+    status
+    peakPower
+    systemPower
+    pvElec
+    useElec
+    buyElec
+    sellElec
+    buyRate
+    sellRate
+    selfUseRate
+    selfConsumedRate1
+    selfConsumedRate2
+    selfConsumedEnergy1
+    selfConsumedEnergy2
+    plantTreeNum
+    reduceCo2
+
+#### H1 Sensors
+
+    totalBuyElec  # Energy -> Grid consumption
+    totalConsumpElec
+    totalSellElec  # Energy -> Return to grid
+    chargeElec  # Energy -> Home Battery Storage -> Energy going in to the battery (kWh)
+    dischargeElec  # Energy -> Home Battery Storage -> Energy coming out of the battery (kWh)
+    isStorageAlarm
+    batCapcity
+    batCurr
+    batEnergyPercent
+    batteryDirection
+    batteryPower
+    gridDirection
+    gridPower
+    h1Online
+    outPower
+    outPutDirection
+    pvDirection
+    pvPower
+    solarPower
+
+#### SEC Module Sensors
+
+    totalPvEnergy
+    totalLoadEnergy  # Energy -> Grid consumption
+    totalBuyEnergy
+    totalSellEnergy  # Energy -> Return to grid
+    gridLoadPower  # Power imported from the grid
+    solarLoadPower  # Solar power being currently self-consumed
+    homeLoadPower  # Total power being consumed by the plant (the home)
+    exportPower  # Power being exported to the grid
 
 <br>
 
-If you have a H1 device, add below Sensors and Resouces:
-
-```yaml
-  - platform: saj_esolar
-    username: aa@bb.cc
-    password: abcd1234
-    plant_id: 0 # Default is 0. Typically ordered in the same way as they are listed in the eSolar app
-    sensors: h1
-    resources:
-      - nowPower
-      - runningState
-      - todayElectricity
-      - monthElectricity
-      - yearElectricity
-      - totalElectricity # Energy -> Solar production
-      - lastUploadTime
-      - totalPlantTreeNum
-      - totalReduceCo2
-      - status
-      - plantuid
-      - currency
-      - address
-      - isOnline
-      - devOnlineNum
-      - selfUseRate
-      - totalBuyElec # Energy -> Grid consumption
-      - totalConsumpElec
-      - totalSellElec # Energy -> Return to grid
-      - chargeElec # Energy -> Home Battery Storage -> Energy going in to the battery (kWh)
-      - dischargeElec # Energy -> Home Battery Storage -> Energy coming out of the battery (kWh)
-
-      - pvElec
-      - useElec
-      - buyElec
-      - sellElec
-      - buyRate
-      - sellRate
-      - selfConsumedRate1
-      - selfConsumedRate2
-      - selfConsumedEnergy1
-      - selfConsumedEnergy2
-      - batCapcity
-      - batCurr
-      - batEnergyPercent
-      - batteryDirection
-      - batteryPower
-      - gridDirection
-      - gridPower
-      - h1Online
-      - outPower
-      - outPutDirection
-      - pvDirection
-      - pvPower
-      - solarPower
-      - totalLoadPower
-```
-<br>
-
-If you have a Saj Sec Module Add below sensor an resources:
-
-```yaml
-  - platform: saj_esolar
-    username: aa@bb.cc
-    password: abcd1234
-    plant_id: 0 # Default is 0. Typically ordered in the same way as they are listed in the eSolar app
-    sensors: saj_sec # Optional will only work with SAJ Sec Module
-    resources:
-      - nowPower
-      - runningState
-      - todayElectricity
-      - monthElectricity
-      - yearElectricity
-      - totalElectricity # Energy -> Solar production
-      - todayGridIncome
-      - income
-      - lastUploadTime
-      - totalPlantTreeNum
-      - totalReduceCo2
-      - status
-      - plantuid
-      - currency
-      - address
-      - isOnline
-      - peakPower
-
-      - pvElec
-      - useElec
-      - buyElec
-      - sellElec
-      - buyRate
-      - sellRate
-      - selfConsumedRate1
-      - selfConsumedRate2
-      - selfConsumedEnergy1
-      - selfConsumedEnergy2
-      - plantTreeNum
-      - reduceCo2
-      - totalPvEnergy
-      - totalLoadEnergy # Energy -> Grid consumption
-      - totalBuyEnergy
-      - totalSellEnergy # Energy -> Return to grid
-      #these entities are deprecated since they return incorrect values
-      - totalGridPower  # Power being exported to the grid
-      - totalLoadPower  # Solar power being currently self-consumed 
-      - totalPvgenPower # Power imported from the grid
-      #these new entities replace them
-      - gridLoadPower   # Power imported from the grid
-      - solarLoadPower  # Solar power being currently self-consumed 
-      - homeLoadPower   # Total power being consumed by the plant (the home)
-      - exportPower     # Power being exported to the grid
-```
-<br><br>
-If you are a user of Solarprofit / Greenheiss
-<br>
-_note that there is an certification issue for the greenheiss portal which is currently not accepted by Home Assistant to fix this use the provider_ssl: False_ 
-
-Add below code to you 
-```yaml
-    provider_domain: inverters.resellerdomain.ext
-    provider_path: cloud
-```
-
-for example for greenheissen:
-```yaml
-  - platform: saj_esolar #greenheissen
-    username: USERNAME
-    password: Password123
-    provider_domain: inversores-style.greenheiss.com
-    provider_path: cloud
-    provider_ssl: False
-    resources:
-      - nowPower
-      - runningState
-      - todayElectricity
-      - monthElectricity
-      - yearElectricity
-      - totalElectricity # Energy -> Solar production
-      - todayGridIncome
-      - income
-      - lastUploadTime
-      - totalPlantTreeNum
-      - totalReduceCo2
-      - isAlarm # Yes / No
-      - status
-      - plantuid
-      - currency
-      - address
-      - isOnline
-      - peakPower
-      - systemPower # Installed capacity
-```
-<br>
-**Configuration variables:**
-
-- **username**           (*Required*): E-mail address used on the eSolar Portal.
-- **password**           (*Required*): Password used on the eSolar Portal, we advise you to save it in your secret.yaml.
-- **resources**          (*Required*): This section tells the component which values to display.
-- **sensors**            (*Optional*): saj_sec / h1 # Optional will only work with SAJ Sec Module
-- **provider_domain**    (*Optional*): inverter.reseller.ext # the url of the reseller ex: inversores-style.greenheiss.com
-- **provider_path**      (*Optional*): cloud # suffix behide domain 
-- **provider_ssl**       (*Optional*): False # to bypass ssl certficate verification (not advised but needed for greenheiss.com)
-#
-<br><br>
-# **Devices**
 
 ## **Supported Devices:**
-<br>
+Following is the list originally compiled by @djansen1987. I currently have no way to test its current state after the elekeeper migration.
+
+The only thing I can say is that you should be able to use the esolar monitoring site for this to work.
+
+I keep this list for historic reasons and maybe to help people searching their hardware to find this integration.
 
 ### **solar Inverter:**
 
@@ -287,8 +171,7 @@ for example for greenheissen:
 
 <br>
 
-## **Not Supported Devices:** *(create github discussion to request)*
-<br>
+## **Not Supported Devices:** *
 
 ### **Commercial Solar Inverter**
 #####  *Suntrio Plus 25-60K* <br>
@@ -298,38 +181,10 @@ for example for greenheissen:
 ### **Storage Solar Inverter**<br>
 #####  *B1-5.1-48* (not tested) <br>
 
-<br><br>
-#
-# **Screenshot**
-
-![alt text](https://github.com/djansen1987/SAJeSolar/blob/main/screenshots/Home-Assistant-Sensors-SAJ-eSolar.png?raw=true "All Sensors")
-![alt text](https://github.com/djansen1987/SAJeSolar/blob/main/screenshots/Home-Assistant-History-SAJ-eSolar.png?raw=true "History Graph")
-
-<br><br>
-
-# **Debugging**
-
-Add the relevant lines below to the `configuration.yaml`:
-
-```yaml
-logger:
-  default: info
-  logs:
-    custom_components.saj_esolar: debug
-```
-<br><br>
-
 # **Credits**
 
-Credits to @cyberjunky. I got inspired by his source code which helped me a lot to creating this Custom Component.
+I would like to thank [@djansen1987](https://www.github.com/djansen1987) for having written the original integration. He put a lot of effort on it even when he did not have personal need for it.
+
+Credits to [@cyberjunky](https://www.github.com/djansen1987) since seems to have inspired @djansen1987 on the first place
 https://github.com/cyberjunky/home-assistant-toon_smartmeter/
-<br><br>
 
-# **Donation**
-
-Buy me a coffee: <br />
-[![Buymeacoffee](https://www.buymeacoffee.com/assets/img/bmc-meta-new/new/apple-icon-120x120.png)](https://www.buymeacoffee.com/djansen1987)
-
-PayPal:<br />
-[![Donate](https://github.com/djansen1987/SAJeSolar/blob/main/screenshots/Paypal-Donate-QR-code.png?raw=true)](https://www.paypal.me/djansen1987)<br />
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/djansen1987)
