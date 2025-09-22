@@ -40,6 +40,7 @@ class EsolarDataUpdateCoordinator(DataUpdateCoordinator):
         except ApiError as err:
             raise UpdateFailed("Error communicating with API") from err
         except Exception as err:
+            _LOGGER.exception("Unexpected Exception")
             raise UpdateFailed("Unknown Error. Please see logs") from err
         
 

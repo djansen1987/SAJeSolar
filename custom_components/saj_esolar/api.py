@@ -435,12 +435,10 @@ class EsolarApiClient:
 
         # Error logging
         except aiohttp.ClientError as err:
-            _LOGGER.error("Cannot poll eSolar using url: %s", err)
+            _LOGGER.exception("Cannot poll eSolar using url: %s", err)
             raise ApiError("Cannot poll eSolar using url") from err
         except TimeoutError as err:
-            _LOGGER.error(
-                "Timeout error occurred while polling eSolar using url: %s", err
-            )
+            _LOGGER.exception("Timeout error occurred while polling eSolar")
             raise ApiError("Timeout error occurred while polling eSolar ") from err
         return data
 
@@ -487,7 +485,7 @@ class EsolarApiClient:
             )
             _LOGGER.debug("login response: %s, %s", response.status, response.text)
         except SSLCertVerificationError as err:
-            _LOGGER.error("SSL Certificate error: %s", err)
+            _LOGGER.exception("SSL Certificate error:")
             raise ApiError("SSL Certificate error") from err
 
         # the login url is a html page so a bad credential returns a 200 with the same page

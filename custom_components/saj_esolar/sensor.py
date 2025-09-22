@@ -233,7 +233,7 @@ class SAJeSolarMeterSensor(CoordinatorEntity, SensorEntity):
             case "isOnline":
                 if "isOnline" in energy["plantList"][self.plant_id]:
                     value = energy.get("plantList", {})[self.plant_id].get(self._type)
-                    self._state = value.upper() == "Y" if value is not None else None
+                    self._state = value.upper() == "Y" if value is not None else "N"
             case "peakPower":
                 if "peakPower" in energy:
                     if energy["peakPower"] is not None:

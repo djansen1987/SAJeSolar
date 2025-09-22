@@ -152,10 +152,10 @@ class EsolarGreenheissFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 api = EsolarApiClient(self.hass, config)
                 await api.verifyLogin()
             except ApiAuthError as err:
-                _LOGGER.error("Authentication error")
+                _LOGGER.exception("Authentication error")
                 errors["base"] = str(err)
             except ApiError as err:
-                _LOGGER.error("API error %s", repr(err.__cause__))
+                _LOGGER.exception("API error")
                 errors["base"] = str(err)
             except Exception:
                 _LOGGER.exception("Unexpected exception")
