@@ -1,5 +1,14 @@
-# !! Important !! **SAJ will change their portal this month to the new portal. This will probably break this integration. If someone is willing to provide fixed code this is welcome, but I do not own an SAJ product anymore and therefor cannot test.**
-My advice would be to switch over to local connection via this HACS integration: https://github.com/wimb0/home-assistant-saj-r5-modbus
+# !! Important !! 
+**Beta testers needed for 1.6.0, particularly H1 owners**
+
+Most SAJ Customers have been moved to a new **Eleekeper** platform.
+If you have **rebranded hardware** (e.g. greenheiss) you most likely were kept in esolar and this platform should keep working.
+
+Please help beta test the 1.6.0 version which aims to modernize and keeping this integration alive.
+
+The 1.6.0 beta includes a modernized code base, UI based configuration and hopefully more robustness.
+
+For a local only integration using modbus check out: https://github.com/wimb0/home-assistant-saj-r5-modbus
 <br><br>
 <br><br>
 <br><br>
