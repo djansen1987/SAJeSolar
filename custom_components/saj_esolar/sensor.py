@@ -393,6 +393,10 @@ class SAJeSolarMeterSensor(CoordinatorEntity, SensorEntity):
                 self._state = _get_value_meter_chart(energy,3)
             case "gridLoadPower":
                 self._state =_get_value_meter_chart(energy,4)
+            case "powerFlow":
+                exportPower= _get_value_meter_chart(energy,3) or 0.0
+                gridLoadPower= _get_value_meter_chart(energy,4) or 0.0
+                self._state=gridLoadPower-exportPower
             # getPlantMeterDetailInfo
             case "selfUseRate":
                 self._state = _get_value_from_deep(

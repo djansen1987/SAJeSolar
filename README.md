@@ -98,6 +98,8 @@ Based on which hardware you have, you might have a different set of entities. Fo
     selfConsumedEnergy2
     plantTreeNum
     reduceCo2
+    powerFlow # the amount of power flowing in or out your home (positive means using from the grid, negative means exporting.)
+              # this entity is meant for the energy dashboard from 2025.12
 
 #### H1 Sensors
 
