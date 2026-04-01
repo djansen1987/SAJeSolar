@@ -13,7 +13,6 @@ import logging
 from typing import Final
 
 import aiohttp
-import async_timeout
 import voluptuous as vol
 
 from homeassistant.components.sensor import (
@@ -34,7 +33,6 @@ from homeassistant.const import (
 )
 
 CONF_PLANT_ID: Final = "plant_id"
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.util import Throttle, dt
@@ -147,7 +145,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription, ...]] = (
         name="nowPower",
         icon="mdi:solar-power",
         native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.ENERGY,
+        device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
         key="runningState",
@@ -281,14 +279,14 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription, ...]] = (
         name="peakPower",
         icon="mdi:solar-panel",
         native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.ENERGY,
+        device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
         key="systemPower",
         name="systemPower",
         icon="mdi:solar-panel",
         native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.ENERGY,
+        device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
         key="pvElec",
@@ -376,7 +374,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription, ...]] = (
         name="totalLoadPower",
         icon="mdi:solar-panel",
         native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.ENERGY,
+        device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
         key="totalPvgenPower",
@@ -395,7 +393,7 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription, ...]] = (
         name="solarLoadPower",
         icon="mdi:solar-power",
         native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.ENERGY,
+        device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
         key="homeLoadPower",
@@ -724,7 +722,7 @@ class SAJeSolarMeterData(object):
             previousChartYear = add_years(today, -1).strftime('%Y')
             nextChartYear = add_years(today, 1).strftime('%Y')
             chartYear = today.strftime('%Y')
-            epochmilliseconds = round(int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds() * 1000))
+            epochmilliseconds = int(dt.utcnow().timestamp() * 1000)
             elecDevicesn = deviceSnArr if self.sensors == "h1" else ""
             url4 = f"{self._provider.getBaseUrl()}/monitor/site/getPlantDetailChart2?plantuid={plantuid}&chartDateType=1&energyType=0&clientDate={clientDate}&deviceSnArr={deviceSnArr}&chartCountType=2&previousChartDay={previousChartDay}&nextChartDay={nextChartDay}&chartDay={chartDay}&previousChartMonth={previousChartMonth}&nextChartMonth={nextChartMonth}&chartMonth={chartMonth}&previousChartYear={previousChartYear}&nextChartYear={nextChartYear}&chartYear={chartYear}&elecDevicesn={elecDevicesn}&_={epochmilliseconds}"
             # _LOGGER.error(f"PlantCharts URL: {url4}")
@@ -866,11 +864,11 @@ class SAJeSolarMeterData(object):
                 self._data = plantDetails
 
         # Error logging
-        except aiohttp.ClientError:
-            _LOGGER.error("Cannot poll eSolar using url: %s")
+        except aiohttp.ClientError as err:
+            _LOGGER.error("Cannot poll eSolar using url: %s", err)
             return
-        except asyncio.TimeoutError:
-            _LOGGER.error("Timeout error occurred while polling eSolar using url: %s")
+        except asyncio.TimeoutError as err:
+            _LOGGER.error("Timeout error occurred while polling eSolar using url: %s", err)
             return
         except Exception as err:
             _LOGGER.error("Unknown error occurred while polling eSolar: %s", err)
@@ -927,7 +925,7 @@ class SAJeSolarMeterSensor(SensorEntity):
         self._dev_id = {}
 
     @property
-    def state(self):
+    def native_value(self):
         """Return the state of the sensor. (total/current power consumption/production or total gas used)"""
         return self._state
 
