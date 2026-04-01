@@ -544,7 +544,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional("provider_path", default="saj"):cv.string,
         vol.Optional("provider_protocol", default="https"):cv.string,
         vol.Optional("provider_ssl", default=True):cv.boolean,
-        vol.Optional("provider_id", default="test_id"):cv.string,
+        vol.Optional("provider_id", default=None):cv.string,
 
 
     }
@@ -908,7 +908,7 @@ class SAJeSolarMeterData(object):
 class SAJeSolarMeterSensor(SensorEntity):
     """Collecting data and return sensor entity."""
 
-    def __init__(self, description: SensorEntityDescription, data, sensors, plant_id, provider_id):
+    def __init__(self, description: SensorEntityDescription, data, sensors, plant_id, provider_id=None):
         """Initialize the sensor."""
         self.entity_description = description
         self._data = data
@@ -918,11 +918,19 @@ class SAJeSolarMeterSensor(SensorEntity):
         self.plant_id = plant_id
         self._type = self.entity_description.key
         self._attr_icon = self.entity_description.icon
-        self._attr_name = f"{SENSOR_PREFIX} {provider_id} {self.entity_description.name}"
         self._attr_state_class = self.entity_description.state_class
         self._attr_native_unit_of_measurement = self.entity_description.native_unit_of_measurement
         self._attr_device_class = self.entity_description.device_class
-        self._attr_unique_id = f"{SENSOR_PREFIX}_{provider_id}_{self._type}"
+
+        if provider_id:
+            # New behavior for users with multiple inverters
+            self._attr_name = f"{SENSOR_PREFIX} {provider_id} {self.entity_description.name}"
+            self._attr_unique_id = f"{SENSOR_PREFIX}_{provider_id}_{self._type}"
+        else:
+            # Old behavior: Preserves the exact strings of the original code, 
+            # including the old trailing space in the unique_id to prevent orphaned entities!
+            self._attr_name = f"{SENSOR_PREFIX} {self.entity_description.name}"
+            self._attr_unique_id = f"{SENSOR_PREFIX} _{self._type}"
 
         self._discovery = False
         self._dev_id = {}
