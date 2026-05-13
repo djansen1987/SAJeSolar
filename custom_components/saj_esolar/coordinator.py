@@ -1,5 +1,6 @@
 """Coordinator for eSolar integration."""
 
+from __future__ import annotations
 import asyncio
 from datetime import timedelta
 import logging
@@ -7,17 +8,18 @@ import logging
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from elekeeper import PlantOverview
 
 from .api import ApiAuthError, ApiError, EsolarApiClient
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class EsolarDataUpdateCoordinator(DataUpdateCoordinator):
-    """Class to manage fetching eSolar data from the API at regular intervals."""
+class EsolarDataUpdateCoordinator(DataUpdateCoordinator[PlantOverview]):
+    """Fetch PlantOverview from the Elekeeper API at regular intervals."""
 
     def __init__(self, hass: HomeAssistant, api_client: EsolarApiClient) -> None:
-        """Initialize the esolar coordinator."""
+        """Initialize the coordinator."""
         super().__init__(
             hass,
             _LOGGER,
@@ -27,20 +29,16 @@ class EsolarDataUpdateCoordinator(DataUpdateCoordinator):
         )
         self.api_client = api_client
 
-    async def _async_update_data(self):
-        """Fetch data from API endpoint."""
+    async def _async_update_data(self) -> PlantOverview:
+        """Fetch data from the Elekeeper API."""
         _LOGGER.debug("Coordinator async_update_data called")
         try:
-            # Note: asyncio.TimeoutError and aiohttp.ClientError are already
-            # handled by the data update coordinator.
-            async with asyncio.timeout(10):
+            async with asyncio.timeout(60):
                 return await self.api_client.fetch_data()
         except ApiAuthError as err:
             raise ConfigEntryAuthFailed from err
         except ApiError as err:
-            raise UpdateFailed("Error communicating with API") from err
+            raise UpdateFailed(f"Error communicating with API: {err}") from err
         except Exception as err:
-            _LOGGER.exception("Unexpected Exception")
-            raise UpdateFailed("Unknown Error. Please see logs") from err
-        
-
+            _LOGGER.exception("Unexpected exception in coordinator")
+            raise UpdateFailed(f"Unknown error: {err}") from err
